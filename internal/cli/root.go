@@ -61,6 +61,8 @@ func NewRoot(app *App) *cobra.Command {
 	cmd.AddCommand(NewDeleteAreaCommand(app))
 	cmd.AddCommand(NewDeleteProjectCommand(app))
 	cmd.AddCommand(NewUpdateProjectCommand(app))
+	cmd.AddCommand(NewListProjectTasksCommand(app))
+	cmd.AddCommand(NewRenameProjectCommand(app))
 	cmd.AddCommand(NewUndoCommand(app))
 	cmd.AddCommand(NewShowCommand(app))
 	cmd.AddCommand(NewSearchCommand(app))
@@ -138,6 +140,10 @@ func NewRoot(app *App) *cobra.Command {
 				printHelp(app.Out, formatHelpText(updateProjectHelp, isTTY(app.Out)))
 			case "delete-project":
 				printHelp(app.Out, formatHelpText(deleteProjectHelp, isTTY(app.Out)))
+			case "list-project-tasks":
+				printHelp(app.Out, formatHelpText(listProjectTasksHelp, isTTY(app.Out)))
+			case "rename-project":
+				printHelp(app.Out, formatHelpText(renameProjectHelp, isTTY(app.Out)))
 			case "help":
 				printHelp(app.Out, formatHelpText(rootHelp, isTTY(app.Out)))
 			default:
@@ -218,6 +224,10 @@ func NewRoot(app *App) *cobra.Command {
 			printHelp(app.Out, formatHelpText(updateProjectHelp, isTTY(app.Out)))
 		case "delete-project":
 			printHelp(app.Out, formatHelpText(deleteProjectHelp, isTTY(app.Out)))
+		case "list-project-tasks":
+			printHelp(app.Out, formatHelpText(listProjectTasksHelp, isTTY(app.Out)))
+		case "rename-project":
+			printHelp(app.Out, formatHelpText(renameProjectHelp, isTTY(app.Out)))
 		default:
 			printHelp(app.Out, formatHelpText(rootHelp, isTTY(app.Out)))
 		}
