@@ -1775,6 +1775,9 @@ OPTIONS
     The ID of an area, project, tag, or todo to show. Takes precedence over
     QUERY. Required if QUERY is not supplied.
 
+  --recursive
+    Include checklist items when showing to-dos.
+
   --json
     Output JSON.
 

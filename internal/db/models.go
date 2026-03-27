@@ -77,6 +77,7 @@ type Item struct {
 	Title        string `json:"title"`
 	Status       *int   `json:"status,omitempty"`
 	Trashed      *bool  `json:"trashed,omitempty"`
+	Checklist    []ChecklistItem `json:"checklist,omitempty"`
 	ProjectTitle string `json:"project_title,omitempty"`
 	AreaTitle    string `json:"area_title,omitempty"`
 	HeadingTitle string `json:"heading_title,omitempty"`

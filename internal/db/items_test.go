@@ -18,7 +18,7 @@ func TestItemByID(t *testing.T) {
 
 	store := &Store{conn: conn, path: ":memory:"}
 
-	item, err := store.ItemByID("P1")
+	item, err := store.ItemByID("P1", false)
 	if err != nil {
 		t.Fatalf("item by id: %v", err)
 	}
@@ -26,7 +26,7 @@ func TestItemByID(t *testing.T) {
 		t.Fatalf("unexpected project item: %#v", item)
 	}
 
-	item, err = store.ItemByID("TAG1")
+	item, err = store.ItemByID("TAG1", false)
 	if err != nil {
 		t.Fatalf("item by id tag: %v", err)
 	}
@@ -48,7 +48,7 @@ func TestItemsByTitle(t *testing.T) {
 
 	store := &Store{conn: conn, path: ":memory:"}
 
-	items, err := store.ItemsByTitle("Home")
+	items, err := store.ItemsByTitle("Home", false)
 	if err != nil {
 		t.Fatalf("items by title: %v", err)
 	}
@@ -56,11 +56,33 @@ func TestItemsByTitle(t *testing.T) {
 		t.Fatalf("unexpected area items: %#v", items)
 	}
 
-	items, err = store.ItemsByTitle("Task One")
+	items, err = store.ItemsByTitle("Task One", false)
 	if err != nil {
 		t.Fatalf("items by title task: %v", err)
 	}
 	if len(items) != 1 || items[0].Type != "to-do" {
 		t.Fatalf("unexpected task items: %#v", items)
+	}
+}
+
+func TestItemByIDWithChecklist(t *testing.T) {
+	conn, err := sql.Open("sqlite", ":memory:")
+	if err != nil {
+		t.Fatalf("open db: %v", err)
+	}
+	defer conn.Close()
+
+	if err := seedTestDB(conn); err != nil {
+		t.Fatalf("seed db: %v", err)
+	}
+
+	store := &Store{conn: conn, path: ":memory:"}
+
+	item, err := store.ItemByID("T1", true)
+	if err != nil {
+		t.Fatalf("item by id with checklist: %v", err)
+	}
+	if len(item.Checklist) != 1 || item.Checklist[0].Title != "Check Item" {
+		t.Fatalf("unexpected checklist: %#v", item.Checklist)
 	}
 }
