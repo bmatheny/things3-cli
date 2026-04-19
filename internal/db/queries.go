@@ -574,6 +574,9 @@ func thingsDateTodayExpr() string {
 	return "((strftime('%Y', date('now', 'localtime')) << 16) | (strftime('%m', date('now', 'localtime')) << 12) | (strftime('%d', date('now', 'localtime')) << 7))"
 }
 
+// queryTasks runs the common task query with the given WHERE clause and filter.
+// SECURITY: where must only contain hardcoded SQL fragments with ? placeholders
+// for parameter binding — never pass unsanitized user input as the where string.
 func (s *Store) queryTasks(where string, args []any, filter TaskFilter, order string) ([]Task, error) {
 	if s == nil || s.conn == nil {
 		return nil, fmt.Errorf("database not initialized")
@@ -630,8 +633,8 @@ func (s *Store) queryTasks(where string, args []any, filter TaskFilter, order st
 		params = append(params, filter.TagID)
 	}
 	if filter.Search != "" {
-		b.WriteString(" AND (lower(t.title) LIKE lower(?) OR lower(t.notes) LIKE lower(?) OR lower(a.title) LIKE lower(?))")
-		like := "%" + filter.Search + "%"
+		b.WriteString(` AND (lower(t.title) LIKE lower(?) ESCAPE '\' OR lower(t.notes) LIKE lower(?) ESCAPE '\' OR lower(a.title) LIKE lower(?) ESCAPE '\')`)
+		like := "%" + escapeLike(filter.Search) + "%"
 		params = append(params, like, like, like)
 	}
 	if filter.CreatedAfter != nil {
@@ -800,4 +803,12 @@ func scanTaskRows(rows *sql.Rows) ([]Task, error) {
 		tasks = append(tasks, t)
 	}
 	return tasks, rows.Err()
+}
+
+// escapeLike escapes SQL LIKE metacharacters so they match literally.
+func escapeLike(s string) string {
+	s = strings.ReplaceAll(s, `\`, `\\`)
+	s = strings.ReplaceAll(s, `%`, `\%`)
+	s = strings.ReplaceAll(s, `_`, `\_`)
+	return s
 }

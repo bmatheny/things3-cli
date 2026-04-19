@@ -128,5 +128,8 @@ func areaTarget(id string, title string) string {
 
 func escapeAppleScriptString(input string) string {
 	replaced := strings.ReplaceAll(input, "\\", "\\\\")
-	return strings.ReplaceAll(replaced, "\"", "\\\"")
+	replaced = strings.ReplaceAll(replaced, "\"", "\\\"")
+	replaced = strings.ReplaceAll(replaced, "\n", "\\n")
+	replaced = strings.ReplaceAll(replaced, "\r", "\\r")
+	return replaced
 }

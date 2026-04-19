@@ -57,7 +57,7 @@ func appendAction(entry ActionEntry) error {
 		return err
 	}
 	entry.Timestamp = time.Now().Format(time.RFC3339)
-	file, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+	file, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
 	if err != nil {
 		return err
 	}
@@ -118,7 +118,7 @@ func removeLastAction() error {
 		}
 	}
 	content := strings.Join(lines, "\n")
-	return os.WriteFile(path, []byte(content), 0o644)
+	return os.WriteFile(path, []byte(content), 0o600)
 }
 
 func taskToActionItem(task db.Task) ActionItem {

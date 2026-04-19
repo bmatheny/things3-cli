@@ -10,25 +10,32 @@ on:
         description: 'Version to release (e.g., 0.1.0)'
         required: true
 
+permissions:
+  contents: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:
           go-version-file: go.mod
 
       - name: Set version
         id: version
+        env:
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            VERSION="v${{ github.event.inputs.version }}"
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            VERSION="v${INPUT_VERSION}"
           else
-            VERSION="${{ github.ref_name }}"
+            VERSION="${REF_NAME}"
           fi
           VERSION="${VERSION#v}"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
@@ -38,13 +45,17 @@ jobs:
         run: go test ./...
 
       - name: Build release artifacts
-        run: ./scripts/build-release.sh "${{ steps.version.outputs.tag }}"
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: ./scripts/build-release.sh "$RELEASE_TAG"
 
       - name: Generate release notes
-        run: ./scripts/release-notes.sh "${{ steps.version.outputs.tag }}" > dist/release-notes.md
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: ./scripts/release-notes.sh "$RELEASE_TAG" > dist/release-notes.md
 
       - name: Publish GitHub release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: things3-cli ${{ steps.version.outputs.tag }}

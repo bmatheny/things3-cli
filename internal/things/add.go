@@ -72,7 +72,7 @@ func BuildAddURL(opts AddOptions, rawInput string) string {
 	}
 
 	if opts.UseClipboard != "" {
-		params = append(params, "use-clipboard="+opts.UseClipboard)
+		params = append(params, "use-clipboard="+URLEncode(opts.UseClipboard))
 	}
 
 	if opts.Heading != "" {
