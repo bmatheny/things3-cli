@@ -33,8 +33,10 @@ brew install ossianhempel/tap/things3-cli
 - `update-area`      Update an existing area
 - `delete-area`      Delete an existing area
 - `update-project`   Update an existing project (requires auth token)
+- `list-project-tasks` List tasks for a project ID from the database
+- `rename-project`   Rename an existing project (requires auth token)
 - `delete-project`   Delete an existing project
-- `show`             Show an area, project, tag, or todo from the database
+- `show`             Show an area, project, tag, or todo from the database (`--recursive` includes checklist items for todos)
 - `search`           Search tasks in the database
 - `inbox`            List inbox tasks
 - `today`            List today tasks
@@ -79,6 +81,7 @@ Things database to list content:
 - `things tags`      List tags
 - `things tasks`     List todos (with filters)
 - `things today`     List Today tasks
+- `things list-project-tasks --id <UUID>` List todos for a project
 
 By default it looks for the Things database in your user Library under the
 Things app group container (the `ThingsData-*` folder). You can override the
@@ -114,6 +117,7 @@ things update --id <uuid> --repeat-clear
   authorization model.
 - Write commands open Things in the background by default; use `--foreground`
   to bring it to the front, or `--dry-run` to print the URL without opening.
+- `show --recursive` includes checklist items in both table and JSON output.
 - Delete commands (todo/project/area) use AppleScript and require Things
   automation permission for your terminal (you may see a macOS prompt).
 - Delete commands prompt for confirmation when run interactively; pass

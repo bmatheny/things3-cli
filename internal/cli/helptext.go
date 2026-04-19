@@ -21,6 +21,8 @@ COMMANDS
   update-area    - update exiting area
   delete-area    - delete an area
   update-project - update exiting project
+  list-project-tasks - list todos belonging to a project
+  rename-project - rename an existing project
   delete-project - delete an existing project
   show           - show an area, project, tag, or todo from the Things database
   search         - search tasks in the Things database
