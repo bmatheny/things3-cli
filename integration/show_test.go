@@ -29,3 +29,19 @@ func TestShowAcceptsQueryFromStdin(t *testing.T) {
 	requireSuccess(t, code)
 	assertContains(t, out, "Project One")
 }
+
+func TestShowRecursiveIncludesChecklist(t *testing.T) {
+	dbPath := writeTestDB(t)
+	out, _, code := runThings(t, "", "show", "--db", dbPath, "--id=T1", "--recursive")
+	requireSuccess(t, code)
+	assertContains(t, out, "CHECKLIST")
+	assertContains(t, out, "Check Item")
+}
+
+func TestShowRecursiveIncludesChecklistJSON(t *testing.T) {
+	dbPath := writeTestDB(t)
+	out, _, code := runThings(t, "", "show", "--db", dbPath, "--id=T1", "--recursive", "--json")
+	requireSuccess(t, code)
+	assertContains(t, out, `"checklist":[`)
+	assertContains(t, out, `"title":"Check Item"`)
+}

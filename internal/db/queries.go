@@ -310,7 +310,7 @@ func (s *Store) TasksCompletedBetween(start, end time.Time, filter TaskFilter) (
 }
 
 // ItemByID returns a single item (task/project/heading, area, or tag) by UUID.
-func (s *Store) ItemByID(id string) (*Item, error) {
+func (s *Store) ItemByID(id string, includeChecklist bool) (*Item, error) {
 	if s == nil || s.conn == nil {
 		return nil, fmt.Errorf("database not initialized")
 	}
@@ -344,6 +344,13 @@ func (s *Store) ItemByID(id string) (*Item, error) {
 		}
 		if headingTitle.Valid {
 			item.HeadingTitle = headingTitle.String
+		}
+		if includeChecklist && item.Type == "to-do" {
+			checklist, err := loadChecklistItems(s.conn, []string{item.UUID})
+			if err != nil {
+				return nil, err
+			}
+			item.Checklist = checklist[item.UUID]
 		}
 		return &item, nil
 	} else if err != sql.ErrNoRows {
@@ -383,7 +390,7 @@ func (s *Store) ItemByID(id string) (*Item, error) {
 }
 
 // ItemsByTitle returns matching items by exact title (case-insensitive).
-func (s *Store) ItemsByTitle(title string) ([]Item, error) {
+func (s *Store) ItemsByTitle(title string, includeChecklist bool) ([]Item, error) {
 	if s == nil || s.conn == nil {
 		return nil, fmt.Errorf("database not initialized")
 	}
@@ -433,6 +440,26 @@ func (s *Store) ItemsByTitle(title string) ([]Item, error) {
 		return nil, err
 	}
 	rows.Close()
+
+	if includeChecklist {
+		taskIDs := make([]string, 0, len(items))
+		for _, item := range items {
+			if item.Type == "to-do" {
+				taskIDs = append(taskIDs, item.UUID)
+			}
+		}
+		if len(taskIDs) > 0 {
+			checklist, err := loadChecklistItems(s.conn, taskIDs)
+			if err != nil {
+				return nil, err
+			}
+			for i := range items {
+				if items[i].Type == "to-do" {
+					items[i].Checklist = checklist[items[i].UUID]
+				}
+			}
+		}
+	}
 
 	rows, err = s.conn.Query("SELECT uuid, title, visible FROM TMArea WHERE lower(title) = lower(?)", title)
 	if err != nil {

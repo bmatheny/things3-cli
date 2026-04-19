@@ -114,7 +114,29 @@ func printItem(out io.Writer, item *db.Item, asJSON bool, noHeader bool) error {
 	}
 	fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 		item.Type, item.UUID, item.Title, status, trashed, item.ProjectTitle, item.AreaTitle, item.HeadingTitle, visible, item.Shortcut, item.ParentID)
-	return w.Flush()
+	if err := w.Flush(); err != nil {
+		return err
+	}
+	if len(item.Checklist) == 0 {
+		return nil
+	}
+	fmt.Fprintln(out)
+	fmt.Fprintln(out, "CHECKLIST")
+	for _, checklistItem := range item.Checklist {
+		fmt.Fprintf(out, "[%s] %s\n", checklistStatusMarker(checklistItem.Status), checklistItem.Title)
+	}
+	return nil
+}
+
+func checklistStatusMarker(status int) string {
+	switch status {
+	case db.StatusCompleted:
+		return "x"
+	case db.StatusCanceled:
+		return "-"
+	default:
+		return " "
+	}
 }
 
 func printTree(out io.Writer, items []db.TreeItem, asJSON bool) error {

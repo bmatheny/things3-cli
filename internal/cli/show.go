@@ -16,6 +16,7 @@ func NewShowCommand(app *App) *cobra.Command {
 	var id string
 	var asJSON bool
 	var noHeader bool
+	var recursive bool
 
 	cmd := &cobra.Command{
 		Use:   "show [OPTIONS...] [--] [-|QUERY]",
@@ -41,7 +42,7 @@ func NewShowCommand(app *App) *cobra.Command {
 			defer store.Close()
 
 			if id != "" {
-				item, err := store.ItemByID(id)
+				item, err := store.ItemByID(id, recursive)
 				if err != nil {
 					if errors.Is(err, sql.ErrNoRows) {
 						return fmt.Errorf("Error: item not found")
@@ -51,7 +52,7 @@ func NewShowCommand(app *App) *cobra.Command {
 				return printItem(app.Out, item, asJSON, noHeader)
 			}
 
-			items, err := store.ItemsByTitle(query)
+			items, err := store.ItemsByTitle(query, recursive)
 			if err != nil {
 				return formatDBError(err)
 			}
@@ -69,6 +70,7 @@ func NewShowCommand(app *App) *cobra.Command {
 	flags.StringVarP(&dbPath, "db", "d", "", "Path to Things database (overrides THINGSDB)")
 	flags.StringVar(&dbPath, "database", "", "Alias for --db")
 	flags.StringVar(&id, "id", "", "ID of area/project/tag/todo")
+	flags.BoolVarP(&recursive, "recursive", "r", false, "Include checklist items when showing to-dos")
 	flags.BoolVarP(&asJSON, "json", "j", false, "Output JSON")
 	flags.BoolVar(&noHeader, "no-header", false, "Suppress header row")
 
