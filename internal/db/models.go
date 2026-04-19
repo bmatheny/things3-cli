@@ -44,6 +44,7 @@ type Task struct {
 	Notes        string          `json:"notes,omitempty"`
 	Start        string          `json:"start,omitempty"`
 	StartDate    string          `json:"start_date,omitempty"`
+	StartBucket  *int            `json:"start_bucket,omitempty"`
 	Repeating    bool            `json:"repeating,omitempty"`
 	Deadline     string          `json:"deadline,omitempty"`
 	StopDate     string          `json:"stop_date,omitempty"`
@@ -72,18 +73,18 @@ type ChecklistItem struct {
 }
 
 type Item struct {
-	UUID         string `json:"uuid"`
-	Type         string `json:"type"`
-	Title        string `json:"title"`
-	Status       *int   `json:"status,omitempty"`
-	Trashed      *bool  `json:"trashed,omitempty"`
+	UUID         string          `json:"uuid"`
+	Type         string          `json:"type"`
+	Title        string          `json:"title"`
+	Status       *int            `json:"status,omitempty"`
+	Trashed      *bool           `json:"trashed,omitempty"`
 	Checklist    []ChecklistItem `json:"checklist,omitempty"`
-	ProjectTitle string `json:"project_title,omitempty"`
-	AreaTitle    string `json:"area_title,omitempty"`
-	HeadingTitle string `json:"heading_title,omitempty"`
-	Visible      *bool  `json:"visible,omitempty"`
-	Shortcut     string `json:"shortcut,omitempty"`
-	ParentID     string `json:"parent_id,omitempty"`
+	ProjectTitle string          `json:"project_title,omitempty"`
+	AreaTitle    string          `json:"area_title,omitempty"`
+	HeadingTitle string          `json:"heading_title,omitempty"`
+	Visible      *bool           `json:"visible,omitempty"`
+	Shortcut     string          `json:"shortcut,omitempty"`
+	ParentID     string          `json:"parent_id,omitempty"`
 }
 
 type TreeItem struct {

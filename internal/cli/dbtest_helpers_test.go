@@ -30,6 +30,7 @@ func writeTestDB(t *testing.T) string {
 			heading TEXT,
 			start INTEGER,
 			startDate INTEGER,
+			startBucket INTEGER,
 			deadline INTEGER,
 			deadlineSuppressionDate INTEGER,
 			creationDate REAL,

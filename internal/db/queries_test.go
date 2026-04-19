@@ -125,6 +125,7 @@ func seedTestDB(conn *sql.DB) error {
 			heading TEXT,
 			start INTEGER,
 			startDate INTEGER,
+			startBucket INTEGER,
 			deadline INTEGER,
 			deadlineSuppressionDate INTEGER,
 			creationDate REAL,

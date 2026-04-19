@@ -36,10 +36,11 @@ func TestResolveTaskOutputOptionsInvalidFormat(t *testing.T) {
 }
 
 func TestWriteTasksCSVSelect(t *testing.T) {
-	task := db.Task{UUID: "ABC", Title: "Task", Status: db.StatusCompleted}
+	startBucket := 1
+	task := db.Task{UUID: "ABC", Title: "Task", Status: db.StatusCompleted, StartBucket: &startBucket}
 	opts := TaskOutputOptions{
 		Format: "csv",
-		Select: []string{"uuid", "title", "status"},
+		Select: []string{"uuid", "title", "status", "start_bucket"},
 	}
 	var buf bytes.Buffer
 	if err := writeTasks(&buf, []db.Task{task}, opts); err != nil {
@@ -50,10 +51,10 @@ func TestWriteTasksCSVSelect(t *testing.T) {
 	if len(lines) != 2 {
 		t.Fatalf("expected 2 lines, got %d", len(lines))
 	}
-	if lines[0] != "UUID,TITLE,STATUS" {
+	if lines[0] != "UUID,TITLE,STATUS,START_BUCKET" {
 		t.Fatalf("unexpected header: %q", lines[0])
 	}
-	if !strings.Contains(lines[1], "ABC,Task,completed") {
+	if !strings.Contains(lines[1], "ABC,Task,completed,1") {
 		t.Fatalf("unexpected row: %q", lines[1])
 	}
 }
