@@ -41,4 +41,6 @@
 - Area/project automation uses AppleScript and may trigger macOS prompts.
 
 ## Agent Scripts / Skills Sync
-- After CLI changes, update the Things 3 CLI skill in `../agent-scripts/skills` to keep agent guidance in sync.
+- Keep the in-repo skill mirror at `skills/things/SKILL.md` in sync with
+  `../agent-scripts/skills/things/SKILL.md`.
+- After CLI changes, update both copies so agent guidance stays aligned.

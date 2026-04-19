@@ -110,6 +110,14 @@ things update --id <uuid> --repeat=week --repeat-every=2
 things update --id <uuid> --repeat-clear
 ```
 
+## Agent Skill
+
+This repo includes a Things agent skill at `skills/things/SKILL.md`.
+
+That file is mirrored to `../agent-scripts/skills/things/SKILL.md` so local
+agent setups can consume the same guidance. Keep both copies in sync when
+commands or behavior change.
+
 ## Notes
 
 - macOS only (uses the Things URL scheme and `open` under the hood).
