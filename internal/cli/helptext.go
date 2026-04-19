@@ -2390,3 +2390,81 @@ EXAMPLES
 SEE ALSO
   Authorization: https://culturedcode.com/things/support/articles/2803573/#overview-authorization
 `
+
+const listProjectTasksHelp = `Usage: things list-project-tasks --id <UUID> [OPTIONS...]
+
+NAME
+  things list-project-tasks - list todos belonging to a project
+
+SYNOPSIS
+  things list-project-tasks --id <UUID> [OPTIONS...]
+
+DESCRIPTION
+  Lists todos that belong to the project identified by {{BT}}--id={{BT}}.
+  Reads from the local Things database (read-only).
+
+  By default only incomplete, non-trashed tasks are shown.
+
+OPTIONS
+  --id=UUID
+    UUID of the project whose tasks to list. Required.
+
+  --db=PATH
+    Path to the Things database. Overrides the THINGSDB environment variable.
+
+  --status=STATUS
+    Filter by status: incomplete, completed, canceled, any. Default: incomplete.
+
+  --limit=N
+    Limit number of results (0 = no limit). Default: 200.
+
+  --json
+    Output JSON.
+
+  --format=FORMAT
+    Output format: table, json, jsonl, csv.
+
+  --no-header
+    Suppress the header row.
+
+EXAMPLES
+  things list-project-tasks --id=8TN1bbz946oBsRBGiQ2XBN
+
+  things list-project-tasks --id=8TN1bbz946oBsRBGiQ2XBN --status=any --json
+`
+
+const renameProjectHelp = `Usage: things rename-project --id <UUID> --title <TITLE>
+
+NAME
+  things rename-project - rename an existing project
+
+SYNOPSIS
+  things rename-project --id <UUID> --title <TITLE>
+
+DESCRIPTION
+  Renames an existing project identified by {{BT}}--id={{BT}} to the new title
+  given by {{BT}}--title={{BT}}.
+
+AUTHORIZATION
+  Update commands require a Things URL scheme token. Run {{BT}}things auth{{BT}}
+  for setup, set {{BT}}THINGS_AUTH_TOKEN{{BT}}, or pass {{BT}}--auth-token{{BT}}.
+
+  Token setup:
+    1. Open Things 3.
+    2. Settings -> General -> Things URLs.
+    3. Copy the token (or enable "Allow 'things' CLI to access Things").
+
+OPTIONS
+  --auth-token=TOKEN
+    The Things URL scheme authorization token. Required. See above for more
+    information on authorization. If not provided, uses THINGS_AUTH_TOKEN.
+
+  --id=UUID
+    The ID of the project to rename. Required.
+
+  --title=TITLE
+    The new title for the project. Required.
+
+EXAMPLES
+  things rename-project --id=8TN1bbz946oBsRBGiQ2XBN --title="My New Name"
+`
