@@ -25,11 +25,15 @@ func TestTodayTasks(t *testing.T) {
 	}
 
 	titles := make(map[string]bool)
+	buckets := make(map[string]int)
 	for _, task := range tasks {
 		titles[task.Title] = true
+		if task.StartBucket != nil {
+			buckets[task.Title] = *task.StartBucket
+		}
 	}
 
-	for _, want := range []string{"Anytime Today", "Someday Past", "Overdue"} {
+	for _, want := range []string{"Anytime Today", "This Evening", "Someday Past", "Overdue"} {
 		if !titles[want] {
 			t.Fatalf("expected task %q in results", want)
 		}
@@ -38,6 +42,12 @@ func TestTodayTasks(t *testing.T) {
 		if titles[unwanted] {
 			t.Fatalf("did not expect task %q in results", unwanted)
 		}
+	}
+	if buckets["Anytime Today"] != 0 {
+		t.Fatalf("expected Anytime Today start bucket 0, got %d", buckets["Anytime Today"])
+	}
+	if buckets["This Evening"] != 1 {
+		t.Fatalf("expected This Evening start bucket 1, got %d", buckets["This Evening"])
 	}
 }
 
@@ -55,6 +65,7 @@ func seedTodayDB(conn *sql.DB) error {
 			heading TEXT,
 			start INTEGER,
 			startDate INTEGER,
+			startBucket INTEGER,
 			deadline INTEGER,
 			deadlineSuppressionDate INTEGER,
 			creationDate REAL,
@@ -77,31 +88,35 @@ func seedTodayDB(conn *sql.DB) error {
 	today := thingsDate(time.Now())
 	yesterday := thingsDate(time.Now().AddDate(0, 0, -1))
 	future := thingsDate(time.Now().AddDate(0, 0, 2))
+	todayBucket := 0
+	eveningBucket := 1
 
 	inserts := []struct {
-		uuid       string
-		title      string
-		start      int
-		startDate  *int
-		deadline   *int
-		deadSuppr  *int
-		status     int
-		trashed    int
-		index      *int
-		recurrence *string
+		uuid        string
+		title       string
+		start       int
+		startDate   *int
+		startBucket *int
+		deadline    *int
+		deadSuppr   *int
+		status      int
+		trashed     int
+		index       *int
+		recurrence  *string
 	}{
-		{"T1", "Anytime Today", 1, &today, nil, nil, StatusIncomplete, 0, nil, nil},
-		{"T2", "Someday Past", 2, &yesterday, nil, nil, StatusIncomplete, 0, nil, nil},
-		{"T3", "Overdue", 1, nil, &yesterday, nil, StatusIncomplete, 0, nil, nil},
-		{"T4", "Suppressed Deadline", 1, nil, &yesterday, intPtr(1), StatusIncomplete, 0, nil, nil},
-		{"T5", "Someday Future", 2, &future, nil, nil, StatusIncomplete, 0, nil, nil},
-		{"T6", "Completed Today", 1, &today, nil, nil, StatusCompleted, 0, nil, nil},
+		{"T1", "Anytime Today", 1, &today, &todayBucket, nil, nil, StatusIncomplete, 0, nil, nil},
+		{"T2", "Someday Past", 2, &yesterday, nil, nil, nil, StatusIncomplete, 0, nil, nil},
+		{"T3", "Overdue", 1, nil, nil, &yesterday, nil, StatusIncomplete, 0, nil, nil},
+		{"T4", "Suppressed Deadline", 1, nil, nil, &yesterday, intPtr(1), StatusIncomplete, 0, nil, nil},
+		{"T5", "Someday Future", 2, &future, nil, nil, nil, StatusIncomplete, 0, nil, nil},
+		{"T6", "Completed Today", 1, &today, nil, nil, nil, StatusCompleted, 0, nil, nil},
+		{"T7", "This Evening", 1, &today, &eveningBucket, nil, nil, StatusIncomplete, 0, nil, nil},
 	}
 
 	for _, item := range inserts {
 		_, err := conn.Exec(
-			`INSERT INTO TMTask (uuid, type, status, trashed, title, start, startDate, deadline, deadlineSuppressionDate, todayIndex, rt1_recurrenceRule)
-			 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			`INSERT INTO TMTask (uuid, type, status, trashed, title, start, startDate, startBucket, deadline, deadlineSuppressionDate, todayIndex, rt1_recurrenceRule)
+			 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			item.uuid,
 			TaskTypeTodo,
 			item.status,
@@ -109,6 +124,7 @@ func seedTodayDB(conn *sql.DB) error {
 			item.title,
 			item.start,
 			item.startDate,
+			item.startBucket,
 			item.deadline,
 			item.deadSuppr,
 			item.index,

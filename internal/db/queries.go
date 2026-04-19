@@ -609,7 +609,7 @@ func (s *Store) queryTasks(where string, args []any, filter TaskFilter, order st
 		return nil, fmt.Errorf("database not initialized")
 	}
 	var b strings.Builder
-	b.WriteString("SELECT t.uuid, t.type, t.title, t.status, t.trashed, t.notes, t.start, t.startDate, t.deadline, t.stopDate, t.creationDate, t.userModificationDate, t.\"index\", t.todayIndex, (t.rt1_recurrenceRule IS NOT NULL) AS repeating, ")
+	b.WriteString("SELECT t.uuid, t.type, t.title, t.status, t.trashed, t.notes, t.start, t.startDate, t.startBucket, t.deadline, t.stopDate, t.creationDate, t.userModificationDate, t.\"index\", t.todayIndex, (t.rt1_recurrenceRule IS NOT NULL) AS repeating, ")
 	b.WriteString("t.project, p.title, t.area, a.title, t.heading, h.title, ")
 	b.WriteString("(SELECT group_concat(title, '" + tagSeparator + "') FROM (")
 	b.WriteString("SELECT tag.title AS title FROM TMTag tag ")
@@ -757,6 +757,7 @@ func scanTaskRows(rows *sql.Rows) ([]Task, error) {
 		var notes sql.NullString
 		var start sql.NullInt64
 		var startDate sql.NullInt64
+		var startBucket sql.NullInt64
 		var deadline sql.NullInt64
 		var stopDate sql.NullFloat64
 		var created sql.NullFloat64
@@ -771,7 +772,7 @@ func scanTaskRows(rows *sql.Rows) ([]Task, error) {
 		var headingID sql.NullString
 		var headingTitle sql.NullString
 		var tagTitles sql.NullString
-		if err := rows.Scan(&t.UUID, &taskType, &t.Title, &t.Status, &t.Trashed, &notes, &start, &startDate, &deadline, &stopDate, &created, &modified, &index, &todayIndex, &repeating, &projectID, &projectTitle, &areaID, &areaTitle, &headingID, &headingTitle, &tagTitles); err != nil {
+		if err := rows.Scan(&t.UUID, &taskType, &t.Title, &t.Status, &t.Trashed, &notes, &start, &startDate, &startBucket, &deadline, &stopDate, &created, &modified, &index, &todayIndex, &repeating, &projectID, &projectTitle, &areaID, &areaTitle, &headingID, &headingTitle, &tagTitles); err != nil {
 			return nil, err
 		}
 		t.Type = taskTypeLabel(taskType)
@@ -793,6 +794,10 @@ func scanTaskRows(rows *sql.Rows) ([]Task, error) {
 		}
 		if startDate.Valid {
 			t.StartDate = formatThingsDate(startDate.Int64)
+		}
+		if startBucket.Valid {
+			val := int(startBucket.Int64)
+			t.StartBucket = &val
 		}
 		if deadline.Valid {
 			t.Deadline = formatThingsDate(deadline.Int64)

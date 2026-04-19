@@ -90,6 +90,9 @@ var taskFieldAliases = map[string]string{
 	"area_title":    "area",
 	"heading_title": "heading",
 	"status_label":  "status_label",
+	"startbucket":   "start_bucket",
+	"start-bucket":  "start_bucket",
+	"start_bucket":  "start_bucket",
 	"todayindex":    "today_index",
 	"today-index":   "today_index",
 	"today_index":   "today_index",
@@ -111,6 +114,7 @@ var taskFieldHeaders = map[string]string{
 	"notes":        "NOTES",
 	"start":        "START",
 	"start_date":   "START_DATE",
+	"start_bucket": "START_BUCKET",
 	"repeating":    "REPEATING",
 	"deadline":     "DEADLINE",
 	"stop_date":    "STOP_DATE",
@@ -162,6 +166,11 @@ func taskFieldValue(task db.Task, field string) any {
 		return task.Start
 	case "start_date":
 		return task.StartDate
+	case "start_bucket":
+		if task.StartBucket == nil {
+			return nil
+		}
+		return *task.StartBucket
 	case "repeating":
 		return task.Repeating
 	case "deadline":
@@ -206,6 +215,11 @@ func taskFieldString(task db.Task, field string) string {
 			return ""
 		}
 		return strconv.Itoa(*task.TodayIndex)
+	case "start_bucket":
+		if task.StartBucket == nil {
+			return ""
+		}
+		return strconv.Itoa(*task.StartBucket)
 	case "tags":
 		return strings.Join(task.Tags, ",")
 	default:
