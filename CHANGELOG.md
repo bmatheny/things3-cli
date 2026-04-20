@@ -7,6 +7,15 @@ Semantic Versioning.
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-04-20
+- Accept `ThingsData-*` and `Things Database.thingsdatabase` directories in `--db` and `THINGSDB`.
+- Return a clear error when a directory does not contain a Things database file.
+- Added checklist output support for `show --recursive`.
+- Added `update-project`, `list-project-tasks`, and `rename-project` commands.
+- Exposed `start_bucket` in Today task output.
+- Hardened GitHub Actions and AppleScript string interpolation.
+- Synced README, root help, and in-repo agent skill guidance with current commands.
+
 ## [0.2.0] - 2026-01-09
 - Added guardrails for unsafe titles (e.g. tag=work) with --allow-unsafe-title override.
 - Require auth token before URL updates; error early with clearer messaging.
