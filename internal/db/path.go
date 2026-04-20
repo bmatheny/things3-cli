@@ -11,15 +11,17 @@ import (
 
 var ErrDatabaseNotFound = errors.New("things database not found")
 
+const thingsDatabaseFile = "main.sqlite"
+
 // ResolveDatabasePath finds the Things database path.
 //
 // Priority: override arg, THINGSDB env, default ThingsData-* locations, legacy path.
 func ResolveDatabasePath(override string) (string, error) {
 	if override != "" {
-		return expandHome(override), nil
+		return normalizeDatabasePath(expandHome(override))
 	}
 	if env := strings.TrimSpace(os.Getenv("THINGSDB")); env != "" {
-		return expandHome(env), nil
+		return normalizeDatabasePath(expandHome(env))
 	}
 
 	home, err := os.UserHomeDir()
@@ -27,7 +29,7 @@ func ResolveDatabasePath(override string) (string, error) {
 		return "", fmt.Errorf("resolve home directory: %w", err)
 	}
 
-	pattern := filepath.Join(home, "Library/Group Containers/JLMPQHK86H.com.culturedcode.ThingsMac", "ThingsData-*", "Things Database.thingsdatabase", "main.sqlite")
+	pattern := filepath.Join(home, "Library/Group Containers/JLMPQHK86H.com.culturedcode.ThingsMac", "ThingsData-*", "Things Database.thingsdatabase", thingsDatabaseFile)
 	matches, _ := filepath.Glob(pattern)
 	if len(matches) > 0 {
 		if path := newestFile(matches); path != "" {
@@ -35,12 +37,36 @@ func ResolveDatabasePath(override string) (string, error) {
 		}
 	}
 
-	legacy := filepath.Join(home, "Library/Group Containers/JLMPQHK86H.com.culturedcode.ThingsMac", "Things Database.thingsdatabase", "main.sqlite")
+	legacy := filepath.Join(home, "Library/Group Containers/JLMPQHK86H.com.culturedcode.ThingsMac", "Things Database.thingsdatabase", thingsDatabaseFile)
 	if fileExists(legacy) {
 		return legacy, nil
 	}
 
 	return "", ErrDatabaseNotFound
+}
+
+func normalizeDatabasePath(path string) (string, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return path, nil
+	}
+	if !info.IsDir() {
+		return path, nil
+	}
+
+	if filepath.Base(path) == "Things Database.thingsdatabase" {
+		candidate := filepath.Join(path, thingsDatabaseFile)
+		if fileExists(candidate) {
+			return candidate, nil
+		}
+		return "", fmt.Errorf("things database file not found in %s", path)
+	}
+
+	candidate := filepath.Join(path, "Things Database.thingsdatabase", thingsDatabaseFile)
+	if fileExists(candidate) {
+		return candidate, nil
+	}
+	return "", fmt.Errorf("expected Things database file, got directory %s", path)
 }
 
 func expandHome(path string) string {
