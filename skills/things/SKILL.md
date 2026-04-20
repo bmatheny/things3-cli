@@ -44,7 +44,7 @@ Repeating (database writes)
  - Repeating adds launch Things in the background first to ensure the item hits the database before the repeat rule is applied.
 
 Filters + DB
-- Use `--db` or `THINGSDB` to point to a specific Things.sqlite.
+- Use `--db` or `THINGSDB` to point to a specific Things database. Accepted forms: the `main.sqlite` file, the `Things Database.thingsdatabase` directory, or the parent `ThingsData-*` directory.
 - Common filters: `--filter-project`, `--filter-area`, `--filter-tag`, `--status`, `--search`, `--limit`, `--offset`.
 - Rich query: `--query` supports boolean ops, field predicates, and regex (e.g. `title:/regex/ AND tag:work`).
 - Repeating tasks: `things repeating` or `--query 'repeating:true'`.
