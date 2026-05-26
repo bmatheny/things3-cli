@@ -6,9 +6,14 @@ The format is based on Keep a Changelog, and this project adheres to
 Semantic Versioning.
 
 ## [Unreleased]
+
+## [0.3.0] - 2026-05-26
+- Added `templates` command to list repeating template tasks from the Things database.
 - Added `update --complete-checklist-item` and `--incomplete-checklist-item`
   to change existing checklist item completion status via the Things JSON URL
   endpoint.
+- Clear task and project notes by passing an empty `--notes` value to `update` and `update-project`.
+- Include projects in `search` results.
 
 ## [0.2.1] - 2026-04-20
 - Accept `ThingsData-*` and `Things Database.thingsdatabase` directories in `--db` and `THINGSDB`.
