@@ -11,6 +11,7 @@ Quick start (read)
 - `things inbox`
 - `things today`
 - `things repeating`
+- `things templates`
 - `things projects` / `things areas` / `things tags`
 - `things tasks --search "query" --json`
 - `things tasks --query 'tag:work AND title:/review/i' --format jsonl`
@@ -49,6 +50,7 @@ Filters + DB
 - Common filters: `--filter-project`, `--filter-area`, `--filter-tag`, `--status`, `--search`, `--limit`, `--offset`.
 - Rich query: `--query` supports boolean ops, field predicates, and regex (e.g. `title:/regex/ AND tag:work`).
 - Repeating tasks: `things repeating` or `--query 'repeating:true'`.
+- Repeating templates: `things templates --area "Area Name"` lists hidden template rows that control future recurring instances.
 - Date filters: `--created-before/after`, `--modified-before/after`, `--due-before`, `--start-before`.
 - URL filter: `--has-url`.
 - Sorting: `--sort created,-deadline,title`.

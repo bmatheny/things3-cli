@@ -80,6 +80,14 @@ func TestProjectsAndTasksQueries(t *testing.T) {
 		t.Fatalf("unexpected repeating tasks: %#v", repeating)
 	}
 
+	templates, err := store.TemplatesTasks(TaskFilter{Status: &status, ExcludeTrashedContext: true, Types: []int{TaskTypeTodo}})
+	if err != nil {
+		t.Fatalf("template tasks: %v", err)
+	}
+	if len(templates) != 1 || templates[0].Title != "Repeat Task" || !templates[0].Repeating {
+		t.Fatalf("unexpected template tasks: %#v", templates)
+	}
+
 	searched, err := store.Tasks(TaskFilter{Search: "notes", Status: &status, ExcludeTrashedContext: true, Types: []int{TaskTypeTodo}})
 	if err != nil {
 		t.Fatalf("search tasks: %v", err)
@@ -132,7 +140,9 @@ func seedTestDB(conn *sql.DB) error {
 			userModificationDate REAL,
 			stopDate REAL,
 			"index" INTEGER,
+			rt1_repeatingTemplate TEXT,
 			rt1_recurrenceRule BLOB,
+			repeater BLOB,
 			todayIndex INTEGER
 		);`,
 		`CREATE TABLE TMTag (uuid TEXT PRIMARY KEY, title TEXT, shortcut TEXT, parent TEXT);`,
@@ -170,6 +180,9 @@ func seedTestDB(conn *sql.DB) error {
 		return err
 	}
 	if _, err := conn.Exec(`INSERT INTO TMTask (uuid, type, status, trashed, title, project, area, heading, start, startDate, deadline, creationDate, userModificationDate, rt1_recurrenceRule) VALUES ('T2', ?, ?, 0, 'Repeat Task', 'P1', 'A1', 'H1', 1, ?, ?, ?, ?, X'01');`, TaskTypeTodo, StatusIncomplete, startDate, deadline, nowUnix, nowUnix); err != nil {
+		return err
+	}
+	if _, err := conn.Exec(`INSERT INTO TMTask (uuid, type, status, trashed, title, project, area, heading, start, startDate, deadline, creationDate, userModificationDate, rt1_repeatingTemplate) VALUES ('T3', ?, ?, 0, 'Generated Repeat Instance', 'P1', 'A1', 'H1', 1, ?, ?, ?, ?, 'T2');`, TaskTypeTodo, StatusCompleted, startDate, deadline, nowUnix, nowUnix); err != nil {
 		return err
 	}
 	if _, err := conn.Exec(`INSERT INTO TMTag (uuid, title) VALUES ('TAG1', 'urgent');`); err != nil {

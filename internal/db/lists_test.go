@@ -74,7 +74,9 @@ func seedListDB(conn *sql.DB) error {
 			userModificationDate REAL,
 			stopDate REAL,
 			"index" INTEGER,
+			rt1_repeatingTemplate TEXT,
 			rt1_recurrenceRule BLOB,
+			repeater BLOB,
 			todayIndex INTEGER
 		);`,
 		`CREATE TABLE TMChecklistItem (

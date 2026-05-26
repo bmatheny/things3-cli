@@ -30,6 +30,7 @@ COMMANDS
   today          - list today tasks from the Things database
   upcoming       - list upcoming tasks from the Things database
   repeating      - list repeating tasks from the Things database
+  templates      - list repeating template tasks from the Things database
   anytime        - list anytime tasks from the Things database
   someday        - list someday tasks from the Things database
   logbook        - list logbook tasks from the Things database
@@ -646,6 +647,101 @@ OPTIONS
     Suppress the header row.
 
 NOTES
+  The database lives in the Things app sandbox. You may need to grant your
+  terminal Full Disk Access to read it.
+`
+
+const templatesHelp = `Usage: things templates [OPTIONS...]
+
+NAME
+  things templates - list repeating template tasks from the Things database
+
+SYNOPSIS
+  things templates [OPTIONS...]
+
+DESCRIPTION
+  Lists hidden repeating template tasks using the local Things database
+  (read-only). These rows control where and how Things creates future
+  instances of recurring todos. By default only incomplete, non-trashed
+  templates are shown.
+
+OPTIONS
+  --db=PATH
+    Path to the Things database. Overrides the THINGSDB environment variable.
+
+  --status=STATUS
+    Filter by status: incomplete, completed, canceled, any. Default: incomplete.
+
+  --project=PROJECT
+    Filter by project title or ID.
+
+  --area=AREA
+    Filter by area title or ID.
+
+  --tag=TAG
+    Filter by tag title or ID.
+
+  --search=TEXT
+    Case-insensitive substring match on title or notes.
+
+  --query=QUERY
+    Rich query with boolean ops, fields, and regex (e.g. title:/regex/ AND tag:work).
+
+  --limit=N
+    Limit number of results (0 = no limit). Default: 200.
+
+  --offset=N
+    Offset results for pagination.
+
+  --created-after=DATE
+    Filter tasks created after (YYYY-MM-DD or RFC3339).
+
+  --created-before=DATE
+    Filter tasks created before (YYYY-MM-DD or RFC3339).
+
+  --modified-after=DATE
+    Filter tasks modified after (YYYY-MM-DD or RFC3339).
+
+  --modified-before=DATE
+    Filter tasks modified before (YYYY-MM-DD or RFC3339).
+
+  --due-before=DATE
+    Filter tasks due before (YYYY-MM-DD).
+
+  --start-before=DATE
+    Filter tasks starting before (YYYY-MM-DD).
+
+  --has-url
+    Filter tasks with URLs in notes.
+
+  --sort=FIELDS
+    Sort by fields (e.g. created,-deadline,title).
+
+  --recursive
+    Include checklist items in JSON output.
+
+  --include-trashed
+    Include trashed tasks.
+
+  --all
+    Include completed, canceled, and trashed tasks.
+
+  --format=FORMAT
+    Output format: table, json, jsonl, csv.
+
+  --select=FIELDS
+    Select fields (comma-separated).
+
+  --json
+    Output JSON (alias for --format json).
+
+  --no-header
+    Suppress the header row.
+
+NOTES
+  Template UUIDs can be passed to update commands, for example:
+    things update --id <uuid> --list "Property"
+
   The database lives in the Things app sandbox. You may need to grant your
   terminal Full Disk Access to read it.
 `

@@ -30,6 +30,14 @@ func TestUpcomingCommand(t *testing.T) {
 	assertContains(t, out, "Upcoming Task")
 }
 
+func TestTemplatesCommand(t *testing.T) {
+	dbPath := writeTestDB(t)
+	out, _, code := runThings(t, "", "templates", "--db", dbPath, "--area", "Home")
+	requireSuccess(t, code)
+	assertContains(t, out, "Template Task")
+	assertNotContains(t, out, "Generated Template Instance")
+}
+
 func TestDeadlinesCommand(t *testing.T) {
 	dbPath := writeTestDB(t)
 	out, _, code := runThings(t, "", "deadlines", "--db", dbPath)

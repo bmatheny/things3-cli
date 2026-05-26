@@ -73,7 +73,9 @@ func seedTodayDB(conn *sql.DB) error {
 			stopDate REAL,
 			"index" INTEGER,
 			todayIndex INTEGER,
-			rt1_recurrenceRule TEXT
+			rt1_repeatingTemplate TEXT,
+			rt1_recurrenceRule TEXT,
+			repeater BLOB
 		);`,
 		`CREATE TABLE TMArea (uuid TEXT PRIMARY KEY, title TEXT, visible INTEGER, "index" INTEGER);`,
 		`CREATE TABLE TMTag (uuid TEXT PRIMARY KEY, title TEXT, shortcut TEXT, parent TEXT);`,

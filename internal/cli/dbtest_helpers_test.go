@@ -37,7 +37,9 @@ func writeTestDB(t *testing.T) string {
 			userModificationDate REAL,
 			stopDate REAL,
 			"index" INTEGER,
+			rt1_repeatingTemplate TEXT,
 			rt1_recurrenceRule BLOB,
+			repeater BLOB,
 			todayIndex INTEGER
 		);`,
 		`CREATE TABLE TMTag (uuid TEXT PRIMARY KEY, title TEXT, shortcut TEXT, parent TEXT);`,
