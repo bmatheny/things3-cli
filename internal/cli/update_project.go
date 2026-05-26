@@ -25,6 +25,7 @@ func NewUpdateProjectCommand(app *App) *cobra.Command {
 			if err := validateWhenInput(opts.When); err != nil {
 				return err
 			}
+			opts.NotesSet = cmd.Flags().Changed("notes")
 
 			token, err := resolveAuthToken(app, opts.AuthToken)
 			if err != nil {

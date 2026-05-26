@@ -11,6 +11,7 @@ type UpdateOptions struct {
 	AuthToken                string
 	ID                       string
 	Notes                    string
+	NotesSet                 bool
 	PrependNotes             string
 	AppendNotes              string
 	When                     string
@@ -51,11 +52,13 @@ func BuildUpdateURL(opts UpdateOptions, rawInput string) (string, error) {
 
 	var title string
 	notes := opts.Notes
+	notesSet := opts.NotesSet
 
 	if rawInput != "" {
 		if HasMultipleLines(rawInput) {
 			title = FindTitle(rawInput)
 			notes = FindNotes(rawInput)
+			notesSet = notes != ""
 		} else {
 			title = rawInput
 		}
@@ -131,7 +134,7 @@ func BuildUpdateURL(opts UpdateOptions, rawInput string) (string, error) {
 		params = append(params, "add-tags="+URLEncode(opts.AddTags))
 	}
 
-	if notes != "" {
+	if notes != "" || notesSet {
 		params = append(params, "notes="+URLEncode(notes))
 	}
 

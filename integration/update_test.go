@@ -111,6 +111,12 @@ func TestUpdateNotesOption(t *testing.T) {
 	assertContains(t, out, "notes="+enc("NOTES NOTES"))
 }
 
+func TestUpdateEmptyNotesOption(t *testing.T) {
+	out, _, code := runThings(t, "", "update", "--auth-token=token", "--id=1", "--notes=")
+	requireSuccess(t, code)
+	assertContains(t, out, "notes=")
+}
+
 func TestUpdateAppendNotesOption(t *testing.T) {
 	out, _, code := runThings(t, "", "update", "--auth-token=token", "--id=1", "--append-notes=APPEND NOTES")
 	requireSuccess(t, code)
