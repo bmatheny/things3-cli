@@ -22,6 +22,7 @@ Write (URL scheme)
 - Checklist items (repeat `--checklist-item` per item): `things add "My task" --checklist-item="Step 1" --checklist-item="Step 2" --checklist-item="Step 3"`
 - `things add-project "Project title" --area "Area Name"`
 - `things update --id <uuid> --notes "Updated notes"`
+- Checklist status by exact title: `things update --id <uuid> --complete-checklist-item "Step 1"` or `things update --id <uuid> --incomplete-checklist-item "Step 1"`
 - Bulk update (preview then apply): `things update --query 'tag:work' --dry-run` then `things update --query 'tag:work' --yes --tags "Work"`
 - `things update-project --id <uuid> "New project title"`
 - `things rename-project --id <uuid> --title "New project title"`

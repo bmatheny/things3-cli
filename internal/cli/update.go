@@ -65,6 +65,9 @@ func NewUpdateCommand(app *App) *cobra.Command {
 			}
 
 			if strings.TrimSpace(opts.ID) == "" {
+				if hasChecklistStatusChanges(opts) {
+					return fmt.Errorf("Error: checklist item status updates require --id")
+				}
 				if !hasExplicitSelector(map[string]bool{"status": changedStatus}, queryOpts) {
 					if err := ensureAuth(); err != nil {
 						return err
@@ -145,6 +148,47 @@ func NewUpdateCommand(app *App) *cobra.Command {
 			}
 
 			hasChanges := hasTodoUpdateChanges(opts, rawInput)
+			if hasChecklistStatusChanges(opts) {
+				if repeatSpec.Enabled {
+					return fmt.Errorf("Error: checklist item status updates cannot be combined with --repeat")
+				}
+				if hasChangesWithoutChecklistStatus(opts, rawInput) {
+					return fmt.Errorf("Error: checklist item status updates cannot be combined with other update fields")
+				}
+				if err := ensureAuth(); err != nil {
+					return err
+				}
+				store, _, err := db.OpenDefault(dbPath)
+				if err != nil {
+					return formatDBError(err)
+				}
+				defer store.Close()
+				task, err := store.TaskByID(opts.ID)
+				if err != nil {
+					return formatDBError(err)
+				}
+				checklist := make([]things.ChecklistItemState, 0, len(task.Checklist))
+				for _, item := range task.Checklist {
+					checklist = append(checklist, things.ChecklistItemState{
+						Title:  item.Title,
+						Status: item.Status,
+					})
+				}
+				url, err := things.BuildChecklistStatusUpdateURL(opts, checklist)
+				if err != nil {
+					return err
+				}
+				if !app.DryRun {
+					entry := ActionEntry{
+						Type:  ActionUpdate,
+						Items: []ActionItem{taskToActionItem(*task)},
+					}
+					if err := appendAction(entry); err != nil {
+						fmt.Fprintf(app.Err, "Warning: failed to write action log: %v\n", err)
+					}
+				}
+				return openURL(app, url)
+			}
 			if !repeatSpec.Enabled {
 				if err := ensureAuth(); err != nil {
 					return err
@@ -347,6 +391,8 @@ func NewUpdateCommand(app *App) *cobra.Command {
 	flags.StringArrayVar(&opts.ChecklistItems, "checklist-item", nil, "Checklist item (repeatable)")
 	flags.StringArrayVar(&opts.PrependChecklistItems, "prepend-checklist-item", nil, "Prepend checklist item (repeatable)")
 	flags.StringArrayVar(&opts.AppendChecklistItems, "append-checklist-item", nil, "Append checklist item (repeatable)")
+	flags.StringArrayVar(&opts.CompleteChecklistItems, "complete-checklist-item", nil, "Mark an existing checklist item complete by exact title (repeatable)")
+	flags.StringArrayVar(&opts.IncompleteChecklistItems, "incomplete-checklist-item", nil, "Mark an existing checklist item incomplete by exact title (repeatable)")
 	flags.BoolVar(&yes, "yes", false, "Confirm bulk update")
 	flags.BoolVar(&allowUnsafeTitle, "allow-unsafe-title", false, "Allow titles that look like flag assignments")
 	flags.BoolVar(&noVerify, "no-verify", false, "Skip verification of when updates against the Things database")
@@ -388,5 +434,19 @@ func hasTodoUpdateChanges(opts things.UpdateOptions, rawInput string) bool {
 	if len(opts.ChecklistItems) > 0 || len(opts.PrependChecklistItems) > 0 || len(opts.AppendChecklistItems) > 0 {
 		return true
 	}
+	if hasChecklistStatusChanges(opts) {
+		return true
+	}
 	return false
+}
+
+func hasChecklistStatusChanges(opts things.UpdateOptions) bool {
+	return len(opts.CompleteChecklistItems) > 0 || len(opts.IncompleteChecklistItems) > 0
+}
+
+func hasChangesWithoutChecklistStatus(opts things.UpdateOptions, rawInput string) bool {
+	withoutChecklistStatus := opts
+	withoutChecklistStatus.CompleteChecklistItems = nil
+	withoutChecklistStatus.IncompleteChecklistItems = nil
+	return hasTodoUpdateChanges(withoutChecklistStatus, rawInput)
 }

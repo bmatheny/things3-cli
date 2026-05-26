@@ -42,5 +42,10 @@
 
 ## Agent Scripts / Skills Sync
 - Keep the in-repo skill mirror at `skills/things/SKILL.md` in sync with
-  `../agent-scripts/skills/things/SKILL.md`.
+  `../agent-scripts/archived-skills/things/SKILL.md`.
 - After CLI changes, update both copies so agent guidance stays aligned.
+- Use `.codex/skills/release-flow/SKILL.md` for public release prep,
+  validation, Homebrew formula updates, and GitHub release verification.
+- If release mechanics change, update `.codex/skills/release-flow/SKILL.md`,
+  `.codex/skills/release-flow/references/release-flow.md`, and
+  `docs/RELEASING.md` together.
