@@ -43,36 +43,20 @@ Move `CHANGELOG.md` entries out of `Unreleased` into:
 
 The GitHub release body must be only the bullets for that version. `./scripts/release-notes.sh vX.Y.Z` is the source of truth.
 
-## Homebrew Formula
+## Homebrew Formula — generate from RELEASED checksums only
 
-Update the formula after artifacts exist:
-
-```sh
-./scripts/update-brew-formula.sh --version vX.Y.Z --tap-dir ~/Developer/homebrew-tap
-```
-
-Validate:
-
-```sh
-rg -n 'version "|download/v|sha256' Formula/things3-cli.rb ~/Developer/homebrew-tap/Formula/things3-cli.rb
-```
-
-After the GitHub release is live, verify install/upgrade from the tap when practical:
-
-```sh
-brew update
-brew reinstall ossianhempel/tap/things3-cli
-things --version
-```
-
-Do not claim Homebrew is ready until the formula references the released tag and tarball checksums.
+The release tarballs are built by CI, and the build is **not** byte-reproducible:
+a locally built tarball gets a different sha256 than the one CI publishes. So the
+formula must reference the **released** artifacts' checksums, which means the
+formula is generated **after** the GitHub release exists — never bumped inside the
+release PR with local checksums. See the agent-driven step below.
 
 ## Publishing
 
 Publishing is automated. Do **not** tag by hand and do **not** run the local
 publish path for normal releases. Instead:
 
-1. Land the changelog + formula bump on `main` via a release PR.
+1. Land the changelog on `main` via a release PR (no formula bump in this PR).
 2. On merge, `.github/workflows/release.yml` detects the new `## [X.Y.Z]`
    CHANGELOG section, tags `vX.Y.Z` at the merge commit, runs tests, builds
    artifacts, generates notes, and publishes `things3-cli vX.Y.Z`. The workflow
@@ -83,20 +67,28 @@ publish path for normal releases. Instead:
 The legacy `git tag … && git push origin vX.Y.Z` and `./scripts/release.sh`
 paths still work but are not the standard flow.
 
-## Homebrew Tap (agent-driven, after the release is live)
+## Homebrew formulas (agent-driven, after the release is live)
 
-CI does not touch the tap. Once the GitHub release exists (so the released
-tarballs are downloadable and their checksums are final), the agent updates and
-pushes the tap:
+CI does not touch any formula. Once the GitHub release exists, pull the
+**published** checksums and regenerate both the tap formula and the in-repo
+`Formula/things3-cli.rb` from them:
 
 ```sh
+gh release download vX.Y.Z -p checksums.txt -O dist/checksums.txt --clobber
 ./scripts/update-brew-formula.sh --version vX.Y.Z --tap-dir ~/Developer/homebrew-tap
+# sanity: these must equal the released checksums.txt
+rg -n 'sha256' Formula/things3-cli.rb ~/Developer/homebrew-tap/Formula/things3-cli.rb
+
+# tap: commit + push directly
 git -C ~/Developer/homebrew-tap add Formula/things3-cli.rb
 git -C ~/Developer/homebrew-tap commit -m "things3-cli vX.Y.Z"
 git -C ~/Developer/homebrew-tap push
 ```
 
-The maintainer never does this manually — the agent driving the release does.
+The in-repo `Formula/things3-cli.rb` change lands via a small follow-up PR (the
+correct checksums only exist after the release, so they can't be in the release
+PR). The maintainer never does any of this manually — the agent driving the
+release does.
 
 ## Post-Release Verification
 

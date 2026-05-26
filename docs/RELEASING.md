@@ -19,8 +19,14 @@ A `workflow_dispatch` (Actions → Release → Run workflow, enter the version)
 is the manual override.
 
 So nobody tags by hand. The maintainer's only required action is to **merge the
-release PR**. Updating the Homebrew tap is **not** in CI — the agent driving the
-release does it (see below).
+release PR**. Both Homebrew formulas (in-repo `Formula/` and the tap) are updated
+**after** the release publishes — by the agent, not in CI (see below).
+
+> **Why the formula is updated after the release, not in the PR:** the release
+> tarballs are built by CI, and the build is **not** byte-reproducible (a locally
+> built tarball gets a different sha256 than CI's). So the formula must reference
+> the **released** artifacts' checksums. Never put locally built checksums in the
+> formula — they will not match what users download.
 
 ## Guardrails
 
@@ -34,12 +40,11 @@ release does it (see below).
 
 - [ ] Confirm the next version matches SemVer scope for the merged changes.
 - [ ] Update `CHANGELOG.md`: add a new `## [X.Y.Z] - YYYY-MM-DD` section with
-      the bullets for this release.
-- [ ] Bump the in-repo Homebrew formula so it ships in the same PR:
-  `./scripts/build-release.sh vX.Y.Z` then
-  `./scripts/update-brew-formula.sh --version vX.Y.Z` (writes `Formula/things3-cli.rb`).
+      the bullets for this release. (Do **not** bump the formula here — see the
+      note above.)
 - [ ] Run tests: `make test`.
-- [ ] Smoke-test an artifact binary and confirm `things --version` reports `vX.Y.Z`.
+- [ ] Build and smoke-test locally: `./scripts/build-release.sh vX.Y.Z` then
+      confirm the built binary's `things --version` reports `vX.Y.Z`.
 - [ ] Sanity-check release notes: `./scripts/release-notes.sh vX.Y.Z`
       (should output only the changelog bullets).
 - [ ] Open the PR and merge it. CI tags and publishes the release automatically.
@@ -48,10 +53,15 @@ release does it (see below).
 
 - [ ] Confirm the GitHub release `things3-cli vX.Y.Z` is live with both darwin
       tarballs and `checksums.txt` attached, and the body is the changelog bullets.
-- [ ] Update and push the Homebrew tap (the released tarballs must already exist
-      so the checksums resolve):
+- [ ] Generate both formulas from the **released** checksums (download the
+      published checksums first so they match what users get):
+  `gh release download vX.Y.Z -p checksums.txt -O dist/checksums.txt --clobber`
+  then
   `./scripts/update-brew-formula.sh --version vX.Y.Z --tap-dir ~/Developer/homebrew-tap`
-  then commit and push the tap repo.
-- [ ] Verify the tap formula points at the new release URLs and checksums.
+  (writes `Formula/things3-cli.rb` and copies it into the tap).
+- [ ] Confirm `Formula/things3-cli.rb` and the tap formula sha256s equal the
+      released `checksums.txt` values.
+- [ ] Commit and push the tap repo; open a follow-up PR for the in-repo
+      `Formula/things3-cli.rb` (its checksums change is too late for the release PR).
 - [ ] Verify Homebrew install or reinstall from `ossianhempel/tap/things3-cli`
       and confirm `things --version`.
