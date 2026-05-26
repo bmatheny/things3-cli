@@ -83,8 +83,14 @@ func writeTestDB(t *testing.T) string {
 	if _, err := conn.Exec(`INSERT INTO TMTag (uuid, title) VALUES ('TAG1', 'urgent');`); err != nil {
 		t.Fatalf("insert tag: %v", err)
 	}
+	if _, err := conn.Exec(`INSERT INTO TMTag (uuid, title) VALUES ('TAG_PLAN', 'PLAN');`); err != nil {
+		t.Fatalf("insert plan tag: %v", err)
+	}
 	if _, err := conn.Exec(`INSERT INTO TMTaskTag (tasks, tags) VALUES ('T1', 'TAG1');`); err != nil {
 		t.Fatalf("insert task tag: %v", err)
+	}
+	if _, err := conn.Exec(`INSERT INTO TMTaskTag (tasks, tags) VALUES ('P1', 'TAG_PLAN');`); err != nil {
+		t.Fatalf("insert project tag: %v", err)
 	}
 	if _, err := conn.Exec(`INSERT INTO TMChecklistItem (uuid, title, status, "index", task) VALUES ('C1', 'Check Item', 0, 0, 'T1');`); err != nil {
 		t.Fatalf("insert checklist: %v", err)

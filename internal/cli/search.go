@@ -22,7 +22,7 @@ func NewSearchCommand(app *App) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "search [--] [-|QUERY]",
-		Short: "Search tasks in the Things database",
+		Short: "Search todos and projects in the Things database",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			query, err := readInput(app.In, args)
 			if err != nil {
@@ -50,7 +50,7 @@ func NewSearchCommand(app *App) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			tasks, err := fetchTasks(store, store.Tasks, opts, false, []int{db.TaskTypeTodo})
+			tasks, err := fetchTasks(store, store.Tasks, opts, false, []int{db.TaskTypeTodo, db.TaskTypeProject})
 			if err != nil {
 				return formatDBError(err)
 			}

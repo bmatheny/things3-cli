@@ -15,3 +15,11 @@ func TestSearchAcceptsQueryFromStdin(t *testing.T) {
 	requireSuccess(t, code)
 	assertContains(t, out, "Task One")
 }
+
+func TestSearchRichQueryIncludesTaggedProjects(t *testing.T) {
+	dbPath := writeTestDB(t)
+	out, _, code := runThings(t, "", "search", "--db", dbPath, "--query", "tag:PLAN", "--select", "type,title")
+	requireSuccess(t, code)
+	assertContains(t, out, "project")
+	assertContains(t, out, "Project One")
+}
