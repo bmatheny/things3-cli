@@ -1897,13 +1897,13 @@ EXAMPLES
 const searchHelp = `Usage: things search [OPTIONS...] [--] <-|QUERY>
 
 NAME
-  things search - search tasks in the Things database
+  things search - search todos and projects in the Things database
 
 SYNOPSIS
   things search [--] <-|QUERY>
 
 DESCRIPTION
-  Searches tasks in the local Things database. The QUERY argument performs a
+  Searches todos and projects in the local Things database. The QUERY argument performs a
   case-insensitive substring search on title or notes. Use {{BT}}--query{{BT}}
   for rich queries with boolean ops, fields, and regex.
 
@@ -1987,6 +1987,8 @@ NOTES
 
 EXAMPLES
   things search "Work"
+
+  things search --query 'tag:PLAN' --select type,title
 
   echo "Home" | things search -
 `

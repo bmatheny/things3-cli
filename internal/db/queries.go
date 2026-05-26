@@ -656,8 +656,8 @@ func (s *Store) queryTasks(where string, args []any, filter TaskFilter, order st
 		params = append(params, *filter.Status)
 	}
 	if filter.ProjectID != "" {
-		b.WriteString(" AND (t.project = ? OR hp.uuid = ?)")
-		params = append(params, filter.ProjectID, filter.ProjectID)
+		b.WriteString(" AND (t.uuid = ? OR t.project = ? OR hp.uuid = ?)")
+		params = append(params, filter.ProjectID, filter.ProjectID, filter.ProjectID)
 	}
 	if filter.AreaID != "" {
 		b.WriteString(" AND t.area = ?")

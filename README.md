@@ -37,7 +37,7 @@ brew install ossianhempel/tap/things3-cli
 - `rename-project`   Rename an existing project (requires auth token)
 - `delete-project`   Delete an existing project
 - `show`             Show an area, project, tag, or todo from the database (`--recursive` includes checklist items for todos)
-- `search`           Search tasks in the database
+- `search`           Search todos and projects in the database
 - `inbox`            List inbox tasks
 - `today`            List today tasks
 - `upcoming`         List upcoming tasks

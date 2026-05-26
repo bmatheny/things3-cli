@@ -15,6 +15,7 @@ Quick start (read)
 - `things projects` / `things areas` / `things tags`
 - `things tasks --search "query" --json`
 - `things tasks --query 'tag:work AND title:/review/i' --format jsonl`
+- `things search --query 'tag:PLAN' --select type,title` searches both todos and projects.
 - `things show --project "Project Name"`
 - `things show --id <TODO_UUID> --recursive --json`
 
