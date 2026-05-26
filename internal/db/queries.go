@@ -175,6 +175,13 @@ func (s *Store) Tasks(filter TaskFilter) ([]Task, error) {
 	return s.queryTasks("", nil, filter, "")
 }
 
+// TemplatesTasks returns hidden repeating template tasks in the database.
+func (s *Store) TemplatesTasks(filter TaskFilter) ([]Task, error) {
+	filter.IncludeRepeating = true
+	where := "t.rt1_repeatingTemplate IS NULL AND (t.rt1_recurrenceRule IS NOT NULL OR t.repeater IS NOT NULL)"
+	return s.queryTasks(where, nil, filter, "")
+}
+
 // TaskByID returns a single task by UUID.
 func (s *Store) TaskByID(id string) (*Task, error) {
 	if strings.TrimSpace(id) == "" {
@@ -610,7 +617,7 @@ func (s *Store) queryTasks(where string, args []any, filter TaskFilter, order st
 		return nil, fmt.Errorf("database not initialized")
 	}
 	var b strings.Builder
-	b.WriteString("SELECT t.uuid, t.type, t.title, t.status, t.trashed, t.notes, t.start, t.startDate, t.startBucket, t.deadline, t.stopDate, t.creationDate, t.userModificationDate, t.\"index\", t.todayIndex, (t.rt1_recurrenceRule IS NOT NULL) AS repeating, ")
+	b.WriteString("SELECT t.uuid, t.type, t.title, t.status, t.trashed, t.notes, t.start, t.startDate, t.startBucket, t.deadline, t.stopDate, t.creationDate, t.userModificationDate, t.\"index\", t.todayIndex, (t.rt1_recurrenceRule IS NOT NULL OR t.repeater IS NOT NULL) AS repeating, ")
 	b.WriteString("t.project, p.title, t.area, a.title, t.heading, h.title, ")
 	b.WriteString("(SELECT group_concat(title, '" + tagSeparator + "') FROM (")
 	b.WriteString("SELECT tag.title AS title FROM TMTag tag ")
@@ -697,9 +704,9 @@ func (s *Store) queryTasks(where string, args []any, filter TaskFilter, order st
 		}
 	}
 	if filter.RepeatingOnly {
-		b.WriteString(" AND t.rt1_recurrenceRule IS NOT NULL")
+		b.WriteString(" AND (t.rt1_recurrenceRule IS NOT NULL OR t.repeater IS NOT NULL)")
 	} else if !filter.IncludeRepeating {
-		b.WriteString(" AND t.rt1_recurrenceRule IS NULL")
+		b.WriteString(" AND t.rt1_recurrenceRule IS NULL AND t.repeater IS NULL")
 	}
 
 	orderClause := order

@@ -42,6 +42,7 @@ brew install ossianhempel/tap/things3-cli
 - `today`            List today tasks
 - `upcoming`         List upcoming tasks
 - `repeating`        List repeating tasks
+- `templates`        List repeating template tasks
 - `anytime`          List anytime tasks
 - `someday`          List someday tasks
 - `logbook`          List logbook tasks
@@ -81,6 +82,7 @@ Things database to list content:
 - `things tags`      List tags
 - `things tasks`     List todos (with filters)
 - `things today`     List Today tasks
+- `things templates` List repeating template tasks
 - `things list-project-tasks --id <UUID>` List todos for a project
 
 By default it looks for the Things database in your user Library under the
@@ -96,6 +98,11 @@ Use `--repeat` flags with `add` or `update`
 to create or change repeating templates. These changes write directly to the
 Things database, so Full Disk Access is required. Repeating updates require a
 single explicit title (for add) or `--id` (for update).
+
+Use `things templates` to list the hidden template rows that control future
+instances of recurring todos. Template UUIDs can be passed to `things update`
+when you need to move or edit the source template rather than the visible
+generated instance.
 
 Supported patterns: every N day/week/month/year, in after-completion (default)
 or schedule mode. The anchor date controls weekday/month/day; multi-day weekly

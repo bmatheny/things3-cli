@@ -39,7 +39,9 @@ func writeTestDB(t *testing.T) string {
 			userModificationDate REAL,
 			stopDate REAL,
 			"index" INTEGER,
+			rt1_repeatingTemplate TEXT,
 			rt1_recurrenceRule BLOB,
+			repeater BLOB,
 			todayIndex INTEGER
 		);`,
 		`CREATE TABLE TMTag (uuid TEXT PRIMARY KEY, title TEXT, shortcut TEXT, parent TEXT);`,
@@ -124,6 +126,23 @@ func writeTestDB(t *testing.T) string {
 		); err != nil {
 			t.Fatalf("insert task %s: %v", item.uuid, err)
 		}
+	}
+
+	if _, err := conn.Exec(
+		`INSERT INTO TMTask (uuid, type, status, trashed, title, area, start, creationDate, rt1_recurrenceRule) VALUES ('TPL1', ?, ?, 0, 'Template Task', 'A1', 1, ?, X'01')`,
+		0,
+		0,
+		nowUnix,
+	); err != nil {
+		t.Fatalf("insert template task: %v", err)
+	}
+	if _, err := conn.Exec(
+		`INSERT INTO TMTask (uuid, type, status, trashed, title, area, start, creationDate, rt1_repeatingTemplate) VALUES ('GEN1', ?, ?, 0, 'Generated Template Instance', 'A1', 1, ?, 'TPL1')`,
+		0,
+		0,
+		nowUnix,
+	); err != nil {
+		t.Fatalf("insert generated repeating instance: %v", err)
 	}
 
 	return path

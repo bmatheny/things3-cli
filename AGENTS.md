@@ -28,6 +28,16 @@
 - Unit tests live next to their packages (e.g., `internal/db/*_test.go`).
 - Integration tests live in `integration/` and include sqlite fixtures and helpers.
 - Run the full suite with `make test` or target a package with `go test ./internal/cli -run TestName`.
+- When Things 3 is available locally, verify user-facing CLI changes against the
+  real app/database in addition to fixtures. Prefer privacy-light smoke tests
+  for read-only commands, such as selecting only UUIDs or limiting output.
+- For write-path changes, create clearly named temporary Things items (for
+  example, prefixed with `things3-cli test`) that exercise the behavior, report
+  exactly what was created and verified, and then delete, complete, or otherwise
+  clean them up unless the developer explicitly wants to inspect them first.
+- If live verification is skipped because Things, Full Disk Access, automation
+  permission, or `THINGS_AUTH_TOKEN` is unavailable, call that out in the final
+  testing notes.
 
 ## Commit & Pull Request Guidelines
 - Recent commits use short, imperative summaries; common prefixes include `feat:`, `chore:`, and `docs:`.

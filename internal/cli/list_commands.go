@@ -72,6 +72,48 @@ func NewRepeatingCommand(app *App) *cobra.Command {
 	return cmd
 }
 
+func NewTemplatesCommand(app *App) *cobra.Command {
+	var dbPath string
+	opts := TaskQueryOptions{
+		Status: "incomplete",
+		Limit:  200,
+	}
+	var format string
+	var selectRaw string
+	var asJSON bool
+	var noHeader bool
+
+	cmd := &cobra.Command{
+		Use:   "templates",
+		Short: "List repeating template tasks from the Things database",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			store, _, err := db.OpenDefault(dbPath)
+			if err != nil {
+				return formatDBError(err)
+			}
+			defer store.Close()
+
+			opts.HasURLSet = cmd.Flags().Changed("has-url")
+			outputOpts, err := resolveTaskOutputOptions(format, asJSON, selectRaw, noHeader)
+			if err != nil {
+				return err
+			}
+			tasks, err := fetchTasks(store, store.TemplatesTasks, opts, false, []int{db.TaskTypeTodo})
+			if err != nil {
+				return formatDBError(err)
+			}
+			return printTasks(app.Out, tasks, outputOpts)
+		},
+	}
+
+	cmd.Flags().StringVarP(&dbPath, "db", "d", "", "Path to Things database (overrides THINGSDB)")
+	cmd.Flags().StringVar(&dbPath, "database", "", "Alias for --db")
+	addTaskQueryFlags(cmd, &opts, true, true)
+	addTaskOutputFlags(cmd, &format, &selectRaw, &asJSON, &noHeader)
+
+	return cmd
+}
+
 func NewDeadlinesCommand(app *App) *cobra.Command {
 	return newTaskListCommand(app, "deadlines", "List tasks with deadlines from the Things database", "incomplete", func(store *db.Store, filter db.TaskFilter) ([]db.Task, error) {
 		return store.DeadlinesTasks(filter)
