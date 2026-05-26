@@ -7,6 +7,7 @@ type UpdateProjectOptions struct {
 	AuthToken      string
 	ID             string
 	Notes          string
+	NotesSet       bool
 	PrependNotes   string
 	AppendNotes    string
 	When           string
@@ -35,11 +36,13 @@ func BuildUpdateProjectURL(opts UpdateProjectOptions, rawInput string) (string, 
 
 	var title string
 	notes := opts.Notes
+	notesSet := opts.NotesSet
 
 	if rawInput != "" {
 		if HasMultipleLines(rawInput) {
 			title = FindTitle(rawInput)
 			notes = FindNotes(rawInput)
+			notesSet = notes != ""
 		} else {
 			title = rawInput
 		}
@@ -93,7 +96,7 @@ func BuildUpdateProjectURL(opts UpdateProjectOptions, rawInput string) (string, 
 		params = append(params, "add-tags="+URLEncode(opts.AddTags))
 	}
 
-	if notes != "" {
+	if notes != "" || notesSet {
 		params = append(params, "notes="+URLEncode(notes))
 	}
 

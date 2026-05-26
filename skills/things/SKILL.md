@@ -22,6 +22,7 @@ Write (URL scheme)
 - Checklist items (repeat `--checklist-item` per item): `things add "My task" --checklist-item="Step 1" --checklist-item="Step 2" --checklist-item="Step 3"`
 - `things add-project "Project title" --area "Area Name"`
 - `things update --id <uuid> --notes "Updated notes"`
+- Clear notes by passing an explicit empty notes value: `things update --id <uuid> --notes ""`
 - Checklist status by exact title: `things update --id <uuid> --complete-checklist-item "Step 1"` or `things update --id <uuid> --incomplete-checklist-item "Step 1"`
 - Bulk update (preview then apply): `things update --query 'tag:work' --dry-run` then `things update --query 'tag:work' --yes --tags "Work"`
 - `things update-project --id <uuid> "New project title"`
@@ -63,6 +64,7 @@ Auth + permissions
 - Update `--when/--later` is verified against the database by default; use `--no-verify` to skip verification.
 - `--later` / `--when=evening` refuses to move tasks that are already scheduled for a non-today date; use `--allow-non-today` to override.
 - Titles that look like flag assignments (e.g. `tag=work`) are rejected; pass `--allow-unsafe-title` to keep them as the title.
+- For updates, an explicitly provided empty `--notes ""` clears notes; omitting `--notes` leaves notes unchanged.
 - Delete commands prompt for confirmation when interactive; pass `--confirm` for single deletes in non-interactive scripts. Query deletes require `--confirm=delete` or `--yes`.
 - Bulk update/delete write an action log; use `things undo` to revert the last bulk update or trash.
 

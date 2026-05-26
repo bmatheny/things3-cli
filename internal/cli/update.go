@@ -46,6 +46,7 @@ func NewUpdateCommand(app *App) *cobra.Command {
 			if err := validateWhenInput(opts.When); err != nil {
 				return err
 			}
+			opts.NotesSet = cmd.Flags().Changed("notes")
 			verifyWhen := resolveWhenValue(opts.When, opts.Later)
 			verifyWhenEnabled := verifyWhen != "" && !noVerify && !app.DryRun
 			guardEvening := strings.EqualFold(verifyWhen, "evening") && !allowNonToday
@@ -407,7 +408,7 @@ func hasTodoUpdateChanges(opts things.UpdateOptions, rawInput string) bool {
 	if strings.TrimSpace(rawInput) != "" {
 		return true
 	}
-	if opts.Notes != "" || opts.PrependNotes != "" || opts.AppendNotes != "" {
+	if opts.Notes != "" || opts.NotesSet || opts.PrependNotes != "" || opts.AppendNotes != "" {
 		return true
 	}
 	if opts.When != "" || opts.Later {
