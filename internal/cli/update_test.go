@@ -171,3 +171,78 @@ func TestUpdateCommandAllowsEveningForNonTodayWithFlag(t *testing.T) {
 		t.Fatalf("expected open invocation")
 	}
 }
+
+func TestUpdateCommandCompletesChecklistItemViaJSON(t *testing.T) {
+	dbPath := writeTestDB(t)
+	launcher := &recordLauncher{}
+	app := &App{
+		In:       strings.NewReader(""),
+		Out:      &bytes.Buffer{},
+		Err:      &bytes.Buffer{},
+		Launcher: launcher,
+	}
+
+	root := NewRoot(app)
+	root.SetArgs([]string{"update", "--db", dbPath, "--auth-token", "tok", "--id", "T1", "--complete-checklist-item", "Check Item"})
+	root.SetOut(app.Out)
+	root.SetErr(app.Err)
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("execute failed: %v", err)
+	}
+	url := requireOpenURL(t, launcher)
+	if !strings.HasPrefix(url, "things:///json?") {
+		t.Fatalf("expected json url, got %q", url)
+	}
+	if !strings.Contains(url, "auth-token=tok") {
+		t.Fatalf("expected auth token in url, got %q", url)
+	}
+	if !strings.Contains(url, "completed%22%3Atrue") {
+		t.Fatalf("expected completed checklist payload, got %q", url)
+	}
+}
+
+func TestUpdateCommandChecklistStatusRequiresID(t *testing.T) {
+	launcher := &recordLauncher{}
+	app := &App{
+		In:       strings.NewReader(""),
+		Out:      &bytes.Buffer{},
+		Err:      &bytes.Buffer{},
+		Launcher: launcher,
+	}
+
+	root := NewRoot(app)
+	root.SetArgs([]string{"update", "--auth-token", "tok", "--complete-checklist-item", "Check Item"})
+	root.SetOut(app.Out)
+	root.SetErr(app.Err)
+
+	if err := root.Execute(); err == nil {
+		t.Fatalf("expected error")
+	}
+	if len(launcher.args) != 0 {
+		t.Fatalf("expected no open invocation")
+	}
+}
+
+func TestUpdateCommandChecklistStatusRejectsOtherChanges(t *testing.T) {
+	dbPath := writeTestDB(t)
+	launcher := &recordLauncher{}
+	app := &App{
+		In:       strings.NewReader(""),
+		Out:      &bytes.Buffer{},
+		Err:      &bytes.Buffer{},
+		Launcher: launcher,
+	}
+
+	root := NewRoot(app)
+	root.SetArgs([]string{"update", "--db", dbPath, "--auth-token", "tok", "--id", "T1", "--complete-checklist-item", "Check Item", "--notes", "Nope"})
+	root.SetOut(app.Out)
+	root.SetErr(app.Err)
+
+	if err := root.Execute(); err == nil {
+		t.Fatalf("expected error")
+	}
+	if len(launcher.args) != 0 {
+		t.Fatalf("expected no open invocation")
+	}
+}

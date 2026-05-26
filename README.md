@@ -108,15 +108,21 @@ Examples:
 things add "Daily standup" --repeat=day --repeat-mode=schedule
 things update --id <uuid> --repeat=week --repeat-every=2
 things update --id <uuid> --repeat-clear
+things update --id <uuid> --complete-checklist-item "Book hotel"
+things update --id <uuid> --incomplete-checklist-item "Book hotel"
 ```
 
-## Agent Skill
+## Agent Skills
 
 This repo includes a Things agent skill at `skills/things/SKILL.md`.
 
-That file is mirrored to `../agent-scripts/skills/things/SKILL.md` so local
-agent setups can consume the same guidance. Keep both copies in sync when
-commands or behavior change.
+That file is mirrored to `../agent-scripts/archived-skills/things/SKILL.md` so
+local agent setups can consume the same guidance. Keep both copies in sync
+when commands or behavior change.
+
+Maintainer release guidance lives in `.codex/skills/release-flow/SKILL.md` and
+`docs/RELEASING.md`. Use it when preparing a public release or updating the
+Homebrew formula.
 
 ## Notes
 

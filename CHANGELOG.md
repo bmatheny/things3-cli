@@ -6,6 +6,9 @@ The format is based on Keep a Changelog, and this project adheres to
 Semantic Versioning.
 
 ## [Unreleased]
+- Added `update --complete-checklist-item` and `--incomplete-checklist-item`
+  to change existing checklist item completion status via the Things JSON URL
+  endpoint.
 
 ## [0.2.1] - 2026-04-20
 - Accept `ThingsData-*` and `Things Database.thingsdatabase` directories in `--db` and `THINGSDB`.

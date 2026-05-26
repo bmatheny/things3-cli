@@ -401,6 +401,16 @@ This Evening.
   todo (maximum of 100). Can be specified multiple times on the command
   line.
 
+*--complete-checklist-item=ITEM*
+  Mark an existing checklist item complete by exact title. Requires
+  `--id` and cannot be combined with other update fields. Can be
+  specified multiple times on the command line.
+
+*--incomplete-checklist-item=ITEM*
+  Mark an existing checklist item incomplete by exact title. Requires
+  `--id` and cannot be combined with other update fields. Can be
+  specified multiple times on the command line.
+
 *--repeat=UNIT*
   Set a repeating schedule. Units: day, week, month, year.
 

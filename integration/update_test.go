@@ -147,6 +147,25 @@ func TestUpdatePrependChecklistItemsOption(t *testing.T) {
 	assertContains(t, out, "prepend-checklist-items="+join(enc("ITEM 1"), enc("ITEM 2")))
 }
 
+func TestUpdateCompleteChecklistItemOption(t *testing.T) {
+	dbPath := writeTestDB(t)
+	out, _, code := runThings(t, "", "update", "--db", dbPath, "--auth-token=token", "--id=T1", "--complete-checklist-item=Check Item")
+	requireSuccess(t, code)
+	assertContains(t, out, "things:///json?")
+	assertContains(t, out, "auth-token=token")
+	assertContains(t, out, enc(`"completed":true`))
+	assertContains(t, out, enc(`"title":"Check Item"`))
+}
+
+func TestUpdateIncompleteChecklistItemOption(t *testing.T) {
+	dbPath := writeTestDB(t)
+	out, _, code := runThings(t, "", "update", "--db", dbPath, "--auth-token=token", "--id=T1", "--incomplete-checklist-item=Check Item")
+	requireSuccess(t, code)
+	assertContains(t, out, "things:///json?")
+	assertNotContains(t, out, enc(`"completed":true`))
+	assertContains(t, out, enc(`"title":"Check Item"`))
+}
+
 func TestUpdateAddTagsOption(t *testing.T) {
 	out, _, code := runThings(t, "", "update", "--auth-token=token", "--id=1", "--add-tags=tag1,tag 3,tag2")
 	requireSuccess(t, code)

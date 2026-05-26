@@ -183,6 +183,7 @@ func (s *Store) TaskByID(id string) (*Task, error) {
 	filter := TaskFilter{
 		IncludeTrashed:        true,
 		ExcludeTrashedContext: false,
+		IncludeChecklist:      true,
 	}
 	tasks, err := s.queryTasks("t.uuid = ?", []any{id}, filter, "")
 	if err != nil {

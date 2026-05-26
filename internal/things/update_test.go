@@ -1,6 +1,8 @@
 package things
 
 import (
+	"encoding/json"
+	"net/url"
 	"strings"
 	"testing"
 )
@@ -111,5 +113,83 @@ func TestBuildUpdateURLTrailingAmpersand(t *testing.T) {
 	}
 	if !strings.HasSuffix(url, "&") {
 		t.Fatalf("expected trailing ampersand in %q", url)
+	}
+}
+
+func TestBuildChecklistStatusUpdateURL(t *testing.T) {
+	built, err := BuildChecklistStatusUpdateURL(UpdateOptions{
+		AuthToken:                "tok",
+		ID:                       "id",
+		CompleteChecklistItems:   []string{"One"},
+		IncompleteChecklistItems: []string{"Two"},
+	}, []ChecklistItemState{
+		{Title: "One", Status: 0},
+		{Title: "Two", Status: 3},
+		{Title: "Three", Status: 3},
+		{Title: "Four", Status: 2},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.HasPrefix(built, "things:///json?auth-token=tok&data=") {
+		t.Fatalf("expected json url, got %q", built)
+	}
+	encoded := strings.TrimSuffix(strings.TrimPrefix(built, "things:///json?auth-token=tok&data="), "&")
+	data, err := url.QueryUnescape(encoded)
+	if err != nil {
+		t.Fatalf("unescape data: %v", err)
+	}
+	var operations []map[string]any
+	if err := json.Unmarshal([]byte(data), &operations); err != nil {
+		t.Fatalf("unmarshal data: %v", err)
+	}
+	if got := operations[0]["operation"]; got != "update" {
+		t.Fatalf("expected update operation, got %#v", got)
+	}
+	attrs := operations[0]["attributes"].(map[string]any)
+	items := attrs["checklist-items"].([]any)
+	first := items[0].(map[string]any)["attributes"].(map[string]any)
+	if first["completed"] != true {
+		t.Fatalf("expected first item completed, got %#v", first)
+	}
+	second := items[1].(map[string]any)["attributes"].(map[string]any)
+	if _, ok := second["completed"]; ok {
+		t.Fatalf("expected second item incomplete, got %#v", second)
+	}
+	third := items[2].(map[string]any)["attributes"].(map[string]any)
+	if third["completed"] != true {
+		t.Fatalf("expected third item to preserve completed, got %#v", third)
+	}
+	fourth := items[3].(map[string]any)["attributes"].(map[string]any)
+	if fourth["canceled"] != true {
+		t.Fatalf("expected fourth item to preserve canceled, got %#v", fourth)
+	}
+}
+
+func TestBuildChecklistStatusUpdateURLRejectsMissingChecklistItem(t *testing.T) {
+	_, err := BuildChecklistStatusUpdateURL(UpdateOptions{
+		AuthToken:              "tok",
+		ID:                     "id",
+		CompleteChecklistItems: []string{"Missing"},
+	}, []ChecklistItemState{{Title: "One", Status: 0}})
+	if err == nil {
+		t.Fatalf("expected error")
+	}
+	if err.Error() != `Error: checklist item "Missing" not found` {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestBuildChecklistStatusUpdateURLRejectsAmbiguousChecklistItem(t *testing.T) {
+	_, err := BuildChecklistStatusUpdateURL(UpdateOptions{
+		AuthToken:              "tok",
+		ID:                     "id",
+		CompleteChecklistItems: []string{"One"},
+	}, []ChecklistItemState{{Title: "One", Status: 0}, {Title: "One", Status: 3}})
+	if err == nil {
+		t.Fatalf("expected error")
+	}
+	if err.Error() != `Error: checklist item "One" is ambiguous (2 matches)` {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
