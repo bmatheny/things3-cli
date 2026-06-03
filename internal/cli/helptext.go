@@ -2061,7 +2061,8 @@ OPTIONS
     Set the when field of a todo. Possible values: today, tomorrow,
     evening, someday, a date string, or a date time string. Including a time
     adds a reminder for that time. The time component is ignored if someday
-    is specified. This field cannot be updated on repeating todo.
+    is specified. An empty string ({{BT}}--when=""{{BT}}) clears the
+    scheduled date. This field cannot be updated on repeating todo.
     Optional.
 
   --later
@@ -2075,13 +2076,14 @@ OPTIONS
     Skip verification of when updates against the Things database.
 
   --deadline=DATE
-    The deadline to apply to the todo. This field cannot be updated on
-    repeating todo. Optional.
+    The deadline to apply to the todo. An empty string
+    ({{BT}}--deadline=""{{BT}}) clears the deadline. This field cannot be
+    updated on repeating todo. Optional.
 
   --tags=TAG1[,TAG2,TAG3...]
     Comma separated strings corresponding to the titles of tags. Replaces
-    all current tags. Does not apply a tag if the specified tag doesn't
-    exist. Optional.
+    all current tags. An empty string ({{BT}}--tags=""{{BT}}) removes all
+    tags. Does not apply a tag if the specified tag doesn't exist. Optional.
 
   --add-tags=TAG1[,TAG2,TAG3...]
     Comma separated strings corresponding to the titles of tags. Adds the
@@ -2424,15 +2426,17 @@ OPTIONS
     Set the when field of a project. Possible values: today, tomorrow,
     evening, someday, a date string, or a date time string. Including a time
     adds a reminder for that time. The time component is ignored if someday
-    is specified. Optional.
+    is specified. An empty string ({{BT}}--when=""{{BT}}) clears the
+    scheduled date. Optional.
 
   --deadline=DATE
-    The deadline to apply to the project. Optional.
+    The deadline to apply to the project. An empty string
+    ({{BT}}--deadline=""{{BT}}) clears the deadline. Optional.
 
   --tags=TAG1[,TAG2,TAG3...]
     Comma separated strings corresponding to the titles of tags. Replaces
-    all current tags. Does not apply a tag if the specified tag doesn't
-    exist. Optional.
+    all current tags. An empty string ({{BT}}--tags=""{{BT}}) removes all
+    tags. Does not apply a tag if the specified tag doesn't exist. Optional.
 
   --add-tags=TAG1[,TAG2,TAG3...]
     Comma separated strings corresponding to the titles of tags. Adds the

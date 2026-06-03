@@ -56,6 +56,32 @@ func TestUpdateProjectCommandWithAuthAndID(t *testing.T) {
 	}
 }
 
+func TestUpdateProjectCommandEmptyValuesClearFields(t *testing.T) {
+	launcher := &recordLauncher{}
+	app := &App{
+		In:       strings.NewReader(""),
+		Out:      &bytes.Buffer{},
+		Err:      &bytes.Buffer{},
+		Launcher: launcher,
+	}
+
+	root := NewRoot(app)
+	root.SetArgs([]string{"update-project", "--auth-token", "tok", "--id", "123", "--when=", "--deadline=", "--tags="})
+	root.SetOut(app.Out)
+	root.SetErr(app.Err)
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("execute failed: %v", err)
+	}
+
+	url := requireOpenURL(t, launcher)
+	for _, param := range []string{"when=&", "deadline=&", "tags=&"} {
+		if !strings.Contains(url, param) {
+			t.Fatalf("expected %q in url, got %q", param, url)
+		}
+	}
+}
+
 func TestUpdateProjectCommandAddTags(t *testing.T) {
 	launcher := &recordLauncher{}
 	app := &App{

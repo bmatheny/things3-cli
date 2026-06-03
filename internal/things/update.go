@@ -15,9 +15,12 @@ type UpdateOptions struct {
 	PrependNotes             string
 	AppendNotes              string
 	When                     string
+	WhenSet                  bool
 	Later                    bool
 	Deadline                 string
+	DeadlineSet              bool
 	Tags                     string
+	TagsSet                  bool
 	AddTags                  string
 	Completed                bool
 	Canceled                 bool
@@ -116,9 +119,11 @@ func BuildUpdateURL(opts UpdateOptions, rawInput string) (string, error) {
 		params = append(params, "when="+URLEncode(opts.When))
 	} else if opts.Later {
 		params = append(params, "when=evening")
+	} else if opts.WhenSet {
+		params = append(params, "when=")
 	}
 
-	if opts.Deadline != "" {
+	if opts.Deadline != "" || opts.DeadlineSet {
 		params = append(params, "deadline="+URLEncode(opts.Deadline))
 	}
 
@@ -126,7 +131,7 @@ func BuildUpdateURL(opts UpdateOptions, rawInput string) (string, error) {
 		params = append(params, "reveal=true")
 	}
 
-	if opts.Tags != "" {
+	if opts.Tags != "" || opts.TagsSet {
 		params = append(params, "tags="+URLEncode(opts.Tags))
 	}
 

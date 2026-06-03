@@ -80,6 +80,32 @@ func TestUpdateCommandLaterFlag(t *testing.T) {
 	}
 }
 
+func TestUpdateCommandEmptyValuesClearFields(t *testing.T) {
+	launcher := &recordLauncher{}
+	app := &App{
+		In:       strings.NewReader(""),
+		Out:      &bytes.Buffer{},
+		Err:      &bytes.Buffer{},
+		Launcher: launcher,
+	}
+
+	root := NewRoot(app)
+	root.SetArgs([]string{"update", "--auth-token", "tok", "--id", "123", "--when=", "--deadline=", "--tags=", "--no-verify"})
+	root.SetOut(app.Out)
+	root.SetErr(app.Err)
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("execute failed: %v", err)
+	}
+
+	url := requireOpenURL(t, launcher)
+	for _, param := range []string{"when=&", "deadline=&", "tags=&"} {
+		if !strings.Contains(url, param) {
+			t.Fatalf("expected %q in url, got %q", param, url)
+		}
+	}
+}
+
 func TestUpdateCommandRejectsUnsafeTitle(t *testing.T) {
 	launcher := &recordLauncher{}
 	app := &App{
