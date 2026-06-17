@@ -47,6 +47,9 @@ func NewUpdateCommand(app *App) *cobra.Command {
 				return err
 			}
 			opts.NotesSet = cmd.Flags().Changed("notes")
+			opts.WhenSet = cmd.Flags().Changed("when")
+			opts.DeadlineSet = cmd.Flags().Changed("deadline")
+			opts.TagsSet = cmd.Flags().Changed("tags")
 			verifyWhen := resolveWhenValue(opts.When, opts.Later)
 			verifyWhenEnabled := verifyWhen != "" && !noVerify && !app.DryRun
 			guardEvening := strings.EqualFold(verifyWhen, "evening") && !allowNonToday
@@ -374,10 +377,10 @@ func NewUpdateCommand(app *App) *cobra.Command {
 	flags.StringVar(&opts.Notes, "notes", "", "Replace notes")
 	flags.StringVar(&opts.PrependNotes, "prepend-notes", "", "Prepend to notes")
 	flags.StringVar(&opts.AppendNotes, "append-notes", "", "Append to notes")
-	flags.StringVar(&opts.When, "when", "", "When to schedule the todo")
+	flags.StringVar(&opts.When, "when", "", "When to schedule the todo (empty string clears the date)")
 	flags.BoolVar(&opts.Later, "later", false, "Move the todo to Later")
-	flags.StringVar(&opts.Deadline, "deadline", "", "Deadline for the todo")
-	flags.StringVar(&opts.Tags, "tags", "", "Replace tags")
+	flags.StringVar(&opts.Deadline, "deadline", "", "Deadline for the todo (empty string clears it)")
+	flags.StringVar(&opts.Tags, "tags", "", "Replace tags (empty string clears all tags)")
 	flags.StringVar(&opts.AddTags, "add-tags", "", "Add tags")
 	flags.BoolVar(&opts.Completed, "completed", false, "Mark the todo completed")
 	flags.BoolVar(&opts.Canceled, "canceled", false, "Mark the todo canceled")
@@ -411,13 +414,13 @@ func hasTodoUpdateChanges(opts things.UpdateOptions, rawInput string) bool {
 	if opts.Notes != "" || opts.NotesSet || opts.PrependNotes != "" || opts.AppendNotes != "" {
 		return true
 	}
-	if opts.When != "" || opts.Later {
+	if opts.When != "" || opts.WhenSet || opts.Later {
 		return true
 	}
-	if opts.Deadline != "" {
+	if opts.Deadline != "" || opts.DeadlineSet {
 		return true
 	}
-	if opts.Tags != "" || opts.AddTags != "" {
+	if opts.Tags != "" || opts.TagsSet || opts.AddTags != "" {
 		return true
 	}
 	if opts.Completed || opts.Canceled {

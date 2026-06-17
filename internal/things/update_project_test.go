@@ -90,6 +90,31 @@ func TestBuildUpdateProjectURLAddTags(t *testing.T) {
 	}
 }
 
+func TestBuildUpdateProjectURLEmptySetValuesClearFields(t *testing.T) {
+	opts := UpdateProjectOptions{AuthToken: "tok", ID: "id", WhenSet: true, DeadlineSet: true, TagsSet: true}
+	url, err := BuildUpdateProjectURL(opts, "")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	for _, param := range []string{"when=&", "deadline=&", "tags=&"} {
+		if !contains(url, param) {
+			t.Fatalf("expected %q in %q", param, url)
+		}
+	}
+}
+
+func TestBuildUpdateProjectURLOmitsUnsetEmptyFields(t *testing.T) {
+	url, err := BuildUpdateProjectURL(UpdateProjectOptions{AuthToken: "tok", ID: "id", Notes: "Notes"}, "")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	for _, param := range []string{"when=", "deadline=", "tags="} {
+		if contains(url, param) {
+			t.Fatalf("did not expect %q in %q", param, url)
+		}
+	}
+}
+
 func TestBuildUpdateProjectURLTrailingAmpersand(t *testing.T) {
 	url, err := BuildUpdateProjectURL(UpdateProjectOptions{AuthToken: "tok", ID: "id", Notes: "Notes"}, "")
 	if err != nil {

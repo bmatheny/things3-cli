@@ -106,6 +106,45 @@ func TestBuildUpdateURLWhenOverridesLater(t *testing.T) {
 	}
 }
 
+func TestBuildUpdateURLEmptySetValuesClearFields(t *testing.T) {
+	opts := UpdateOptions{AuthToken: "tok", ID: "id", WhenSet: true, DeadlineSet: true, TagsSet: true}
+	url, err := BuildUpdateURL(opts, "")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	for _, param := range []string{"when=&", "deadline=&", "tags=&"} {
+		if !contains(url, param) {
+			t.Fatalf("expected %q in %q", param, url)
+		}
+	}
+}
+
+func TestBuildUpdateURLOmitsUnsetEmptyFields(t *testing.T) {
+	url, err := BuildUpdateURL(UpdateOptions{AuthToken: "tok", ID: "id", Notes: "Notes"}, "")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	for _, param := range []string{"when=", "deadline=", "tags="} {
+		if contains(url, param) {
+			t.Fatalf("did not expect %q in %q", param, url)
+		}
+	}
+}
+
+func TestBuildUpdateURLLaterOverridesEmptyWhen(t *testing.T) {
+	opts := UpdateOptions{AuthToken: "tok", ID: "id", Later: true, WhenSet: true}
+	url, err := BuildUpdateURL(opts, "")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !contains(url, "when=evening") {
+		t.Fatalf("expected when=evening in %q", url)
+	}
+	if contains(url, "when=&") {
+		t.Fatalf("did not expect empty when in %q", url)
+	}
+}
+
 func TestBuildUpdateURLTrailingAmpersand(t *testing.T) {
 	url, err := BuildUpdateURL(UpdateOptions{AuthToken: "tok", ID: "id", Notes: "Notes"}, "")
 	if err != nil {

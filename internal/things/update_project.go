@@ -11,8 +11,11 @@ type UpdateProjectOptions struct {
 	PrependNotes   string
 	AppendNotes    string
 	When           string
+	WhenSet        bool
 	Deadline       string
+	DeadlineSet    bool
 	Tags           string
+	TagsSet        bool
 	AddTags        string
 	AreaID         string
 	Area           string
@@ -68,11 +71,11 @@ func BuildUpdateProjectURL(opts UpdateProjectOptions, rawInput string) (string, 
 		params = append(params, "duplicate=true")
 	}
 
-	if opts.When != "" {
+	if opts.When != "" || opts.WhenSet {
 		params = append(params, "when="+URLEncode(opts.When))
 	}
 
-	if opts.Deadline != "" {
+	if opts.Deadline != "" || opts.DeadlineSet {
 		params = append(params, "deadline="+URLEncode(opts.Deadline))
 	}
 
@@ -88,7 +91,7 @@ func BuildUpdateProjectURL(opts UpdateProjectOptions, rawInput string) (string, 
 		params = append(params, "reveal=true")
 	}
 
-	if opts.Tags != "" {
+	if opts.Tags != "" || opts.TagsSet {
 		params = append(params, "tags="+URLEncode(opts.Tags))
 	}
 
