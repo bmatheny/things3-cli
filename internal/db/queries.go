@@ -4,8 +4,10 @@ import (
 	"database/sql"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
+	"unicode"
 )
 
 const tagSeparator = "\x1f"
@@ -566,7 +568,7 @@ func resolveAreaID(conn *sql.DB, input string) (string, error) {
 	} else if err != sql.ErrNoRows {
 		return "", err
 	}
-	return "", fmt.Errorf("area not found: %s", input)
+	return resolveByNameFallback(conn, input, "area", "SELECT uuid, title FROM TMArea")
 }
 
 func resolveProjectID(conn *sql.DB, input string) (string, error) {
@@ -584,7 +586,11 @@ func resolveProjectID(conn *sql.DB, input string) (string, error) {
 	} else if err != sql.ErrNoRows {
 		return "", err
 	}
-	return "", fmt.Errorf("project not found: %s", input)
+	// Exclude trashed projects from fuzzy matching: a loose substring match
+	// should never silently resolve to a trashed project on a write path. The
+	// exact UUID/title tiers above intentionally still resolve trashed projects,
+	// since those express explicit intent.
+	return resolveByNameFallback(conn, input, "project", "SELECT uuid, title FROM TMTask WHERE type = ? AND trashed = 0", TaskTypeProject)
 }
 
 func resolveTagID(conn *sql.DB, input string) (string, error) {
@@ -602,7 +608,92 @@ func resolveTagID(conn *sql.DB, input string) (string, error) {
 	} else if err != sql.ErrNoRows {
 		return "", err
 	}
-	return "", fmt.Errorf("tag not found: %s", input)
+	return resolveByNameFallback(conn, input, "tag", "SELECT uuid, title FROM TMTag")
+}
+
+// normalizeForMatch lowercases s and keeps only letters, digits, and single
+// interior spaces, dropping emoji, symbols, and punctuation. This powers
+// emoji-insensitive name resolution so a query like "Rebtech" can match an
+// area titled "💼 Rebtech".
+func normalizeForMatch(s string) string {
+	var b strings.Builder
+	lastSpace := false
+	for _, r := range strings.ToLower(s) {
+		switch {
+		case unicode.IsLetter(r) || unicode.IsDigit(r):
+			b.WriteRune(r)
+			lastSpace = false
+		case unicode.IsSpace(r):
+			if b.Len() > 0 && !lastSpace {
+				b.WriteRune(' ')
+				lastSpace = true
+			}
+		}
+		// Everything else (emoji, punctuation, symbols) is dropped.
+	}
+	return strings.TrimRight(b.String(), " ")
+}
+
+// resolveByNameFallback is the loose-matching tier used after exact UUID and
+// exact title lookups fail. It compares an emoji/symbol-stripped form of the
+// input against every candidate title, preferring a normalized-exact match and
+// falling back to a substring match. It resolves only when exactly one
+// candidate matches; multiple matches return an error listing them so the
+// caller can disambiguate. listQuery must select (uuid, title) for the entity.
+func resolveByNameFallback(conn *sql.DB, input, label, listQuery string, listArgs ...any) (string, error) {
+	normInput := normalizeForMatch(input)
+	if normInput == "" {
+		return "", fmt.Errorf("%s not found: %s", label, input)
+	}
+
+	rows, err := conn.Query(listQuery, listArgs...)
+	if err != nil {
+		return "", err
+	}
+	defer rows.Close()
+
+	type candidate struct {
+		uuid  string
+		title string
+	}
+	var exact, substr []candidate
+	for rows.Next() {
+		var uuid string
+		var title sql.NullString
+		if err := rows.Scan(&uuid, &title); err != nil {
+			return "", err
+		}
+		norm := normalizeForMatch(title.String)
+		if norm == "" {
+			continue
+		}
+		switch {
+		case norm == normInput:
+			exact = append(exact, candidate{uuid, title.String})
+		case strings.Contains(norm, normInput):
+			substr = append(substr, candidate{uuid, title.String})
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return "", err
+	}
+
+	matches := exact
+	if len(matches) == 0 {
+		matches = substr
+	}
+	switch len(matches) {
+	case 1:
+		return matches[0].uuid, nil
+	case 0:
+		return "", fmt.Errorf("%s not found: %s", label, input)
+	default:
+		titles := make([]string, len(matches))
+		for i, m := range matches {
+			titles[i] = strconv.Quote(m.title)
+		}
+		return "", fmt.Errorf("%s %q is ambiguous, matches: %s", label, input, strings.Join(titles, ", "))
+	}
 }
 
 func thingsDateTodayExpr() string {

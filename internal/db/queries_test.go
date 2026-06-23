@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"strings"
 	"testing"
 	"time"
 )
@@ -200,4 +201,182 @@ func seedTestDB(conn *sql.DB) error {
 func thingsDateForTest(t time.Time) int {
 	date := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 	return date.Year()<<16 | int(date.Month())<<12 | date.Day()<<7
+}
+
+func TestNormalizeForMatch(t *testing.T) {
+	cases := map[string]string{
+		"💼 Rebtech":         "rebtech",
+		"Rebtech":           "rebtech",
+		"  Rebtech  ":       "rebtech",
+		"🤳🍽️ PlateSnap":     "platesnap",
+		"Rebtech Hemsida ":  "rebtech hemsida",
+		"💰Personal Finance": "personal finance",
+		"💼":                 "",
+		"":                  "",
+	}
+	for in, want := range cases {
+		if got := normalizeForMatch(in); got != want {
+			t.Errorf("normalizeForMatch(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+func TestResolveAreaIDEmojiInsensitive(t *testing.T) {
+	conn, err := sql.Open("sqlite", ":memory:")
+	if err != nil {
+		t.Fatalf("open db: %v", err)
+	}
+	defer conn.Close()
+
+	if _, err := conn.Exec(`CREATE TABLE TMArea (uuid TEXT PRIMARY KEY, title TEXT, visible INTEGER, "index" INTEGER);`); err != nil {
+		t.Fatalf("create table: %v", err)
+	}
+	seed := []struct{ uuid, title string }{
+		{"AR1", "💼 Rebtech"},
+		{"AR2", "🤳🍽️ PlateSnap"},
+		{"AR3", "🧪 Rebtech Lab"},
+	}
+	for _, a := range seed {
+		if _, err := conn.Exec(`INSERT INTO TMArea (uuid, title, visible, "index") VALUES (?, ?, 1, 0);`, a.uuid, a.title); err != nil {
+			t.Fatalf("insert area: %v", err)
+		}
+	}
+
+	t.Run("exact title still resolves", func(t *testing.T) {
+		got, err := resolveAreaID(conn, "💼 Rebtech")
+		if err != nil || got != "AR1" {
+			t.Fatalf("got (%q, %v), want AR1", got, err)
+		}
+	})
+
+	t.Run("uuid still resolves", func(t *testing.T) {
+		got, err := resolveAreaID(conn, "AR2")
+		if err != nil || got != "AR2" {
+			t.Fatalf("got (%q, %v), want AR2", got, err)
+		}
+	})
+
+	t.Run("emoji-stripped exact resolves", func(t *testing.T) {
+		got, err := resolveAreaID(conn, "PlateSnap")
+		if err != nil || got != "AR2" {
+			t.Fatalf("got (%q, %v), want AR2", got, err)
+		}
+	})
+
+	t.Run("case-insensitive substring resolves", func(t *testing.T) {
+		// "rebtech" is a substring of both "Rebtech" and "Rebtech Lab", but the
+		// normalized-exact tier prefers the unique exact hit (AR1).
+		got, err := resolveAreaID(conn, "rebtech")
+		if err != nil || got != "AR1" {
+			t.Fatalf("got (%q, %v), want AR1", got, err)
+		}
+	})
+
+	t.Run("ambiguous substring errors with candidates", func(t *testing.T) {
+		_, err := resolveAreaID(conn, "reb")
+		if err == nil {
+			t.Fatal("expected ambiguity error, got nil")
+		}
+		msg := err.Error()
+		if !strings.Contains(msg, "ambiguous") || !strings.Contains(msg, "Rebtech") || !strings.Contains(msg, "Rebtech Lab") {
+			t.Fatalf("unexpected error: %q", msg)
+		}
+	})
+
+	t.Run("no match errors not found", func(t *testing.T) {
+		_, err := resolveAreaID(conn, "Nonexistent")
+		if err == nil || !strings.Contains(err.Error(), "not found") {
+			t.Fatalf("expected not-found error, got %v", err)
+		}
+	})
+}
+
+func TestResolveProjectIDEmojiInsensitive(t *testing.T) {
+	conn, err := sql.Open("sqlite", ":memory:")
+	if err != nil {
+		t.Fatalf("open db: %v", err)
+	}
+	defer conn.Close()
+
+	if _, err := conn.Exec(`CREATE TABLE TMTask (uuid TEXT PRIMARY KEY, type INTEGER, status INTEGER, trashed INTEGER, title TEXT);`); err != nil {
+		t.Fatalf("create table: %v", err)
+	}
+	rows := []struct {
+		uuid, title       string
+		taskType, trashed int
+	}{
+		{"PR1", "🚀 Launch Plan", TaskTypeProject, 0},
+		{"PR2", "💼 Rebtech Hemsida", TaskTypeProject, 0},
+		{"PR3", "🗑️ Launch Plan", TaskTypeProject, 1},      // trashed: must not fuzzy-match
+		{"HD1", "Launch Plan Heading", TaskTypeHeading, 0}, // wrong type: must not match
+		{"TD1", "Launch the rocket", TaskTypeTodo, 0},      // wrong type: must not match
+	}
+	for _, r := range rows {
+		if _, err := conn.Exec(`INSERT INTO TMTask (uuid, type, status, trashed, title) VALUES (?, ?, 0, ?, ?);`, r.uuid, r.taskType, r.trashed, r.title); err != nil {
+			t.Fatalf("insert task: %v", err)
+		}
+	}
+
+	t.Run("emoji-stripped exact resolves the project only", func(t *testing.T) {
+		// "Launch Plan" exists as an active project (PR1), a trashed project
+		// (PR3, excluded), and a heading (HD1, wrong type) — only PR1 should win.
+		got, err := resolveProjectID(conn, "Launch Plan")
+		if err != nil || got != "PR1" {
+			t.Fatalf("got (%q, %v), want PR1", got, err)
+		}
+	})
+
+	t.Run("substring resolves across emoji", func(t *testing.T) {
+		got, err := resolveProjectID(conn, "rebtech")
+		if err != nil || got != "PR2" {
+			t.Fatalf("got (%q, %v), want PR2", got, err)
+		}
+	})
+
+	t.Run("trashed project is not a fuzzy match", func(t *testing.T) {
+		// Drop the active project so only the trashed "Launch Plan" remains;
+		// it must not resolve.
+		if _, err := conn.Exec(`DELETE FROM TMTask WHERE uuid = 'PR1';`); err != nil {
+			t.Fatalf("delete: %v", err)
+		}
+		_, err := resolveProjectID(conn, "Launch Plan")
+		if err == nil || !strings.Contains(err.Error(), "not found") {
+			t.Fatalf("expected not-found error, got %v", err)
+		}
+	})
+}
+
+func TestResolveTagIDEmojiInsensitive(t *testing.T) {
+	conn, err := sql.Open("sqlite", ":memory:")
+	if err != nil {
+		t.Fatalf("open db: %v", err)
+	}
+	defer conn.Close()
+
+	if _, err := conn.Exec(`CREATE TABLE TMTag (uuid TEXT PRIMARY KEY, title TEXT, shortcut TEXT, parent TEXT);`); err != nil {
+		t.Fatalf("create table: %v", err)
+	}
+	tags := []struct{ uuid, title string }{
+		{"TG1", "🔥 Urgent"},
+		{"TG2", "⏳ Waiting"},
+	}
+	for _, tg := range tags {
+		if _, err := conn.Exec(`INSERT INTO TMTag (uuid, title) VALUES (?, ?);`, tg.uuid, tg.title); err != nil {
+			t.Fatalf("insert tag: %v", err)
+		}
+	}
+
+	t.Run("emoji-stripped exact resolves", func(t *testing.T) {
+		got, err := resolveTagID(conn, "urgent")
+		if err != nil || got != "TG1" {
+			t.Fatalf("got (%q, %v), want TG1", got, err)
+		}
+	})
+
+	t.Run("no match errors not found", func(t *testing.T) {
+		_, err := resolveTagID(conn, "nope")
+		if err == nil || !strings.Contains(err.Error(), "not found") {
+			t.Fatalf("expected not-found error, got %v", err)
+		}
+	})
 }
