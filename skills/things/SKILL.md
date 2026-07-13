@@ -9,7 +9,7 @@ Use `things` to read from the local Things 3 database and to create/update items
 
 Quick start (read)
 - `things inbox`
-- `things today`
+- `things today` follows the app's Today/This Evening order; select `start_bucket,today_index_reference_date,today_index` to inspect its raw ordering metadata.
 - `things repeating`
 - `things templates`
 - `things projects` / `things areas` / `things tags`
@@ -57,7 +57,7 @@ Filters + DB
 - Date filters: `--created-before/after`, `--modified-before/after`, `--due-before`, `--start-before`.
 - URL filter: `--has-url`.
 - Sorting: `--sort created,-deadline,title`.
-- Output: `--format table|json|jsonl|csv`, `--select uuid,title,status`, `--no-header`. `--json` still works.
+- Output: `--format table|json|jsonl|csv`, `--select uuid,title,status`, `--no-header`. `--json` still works. `today_index_reference_date` is selectable as a raw packed integer but is not a generic `--sort` field.
 - `--recursive` includes checklist items in JSON output.
 
 Auth + permissions

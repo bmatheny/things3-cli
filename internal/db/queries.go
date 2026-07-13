@@ -1,6 +1,7 @@
 package db
 
 import (
+	"cmp"
 	"database/sql"
 	"fmt"
 	"sort"
@@ -207,36 +208,63 @@ func (s *Store) TaskByID(id string) (*Task, error) {
 // TodayTasks returns tasks that belong in Today according to Things rules.
 func (s *Store) TodayTasks(filter TaskFilter) ([]Task, error) {
 	todayExpr := thingsDateTodayExpr()
-	regular, err := s.queryTasks("t.start = 1 AND t.startDate IS NOT NULL", nil, filter, "t.todayIndex")
+	const todayOrder = "t.startBucket ASC, t.todayIndexReferenceDate DESC, t.todayIndex ASC, t.uuid ASC"
+	regular, err := s.queryTasks("t.start = 1 AND t.startDate IS NOT NULL", nil, filter, todayOrder)
 	if err != nil {
 		return nil, err
 	}
-	unconfirmedScheduled, err := s.queryTasks("t.start = 2 AND t.startDate IS NOT NULL AND t.startDate <= "+todayExpr, nil, filter, "t.todayIndex")
+	unconfirmedScheduled, err := s.queryTasks("t.start = 2 AND t.startDate IS NOT NULL AND t.startDate <= "+todayExpr, nil, filter, todayOrder)
 	if err != nil {
 		return nil, err
 	}
-	unconfirmedOverdue, err := s.queryTasks("t.startDate IS NULL AND t.deadline IS NOT NULL AND t.deadline <= "+todayExpr+" AND t.deadlineSuppressionDate IS NULL", nil, filter, "t.todayIndex")
+	unconfirmedOverdue, err := s.queryTasks("t.startDate IS NULL AND t.deadline IS NOT NULL AND t.deadline <= "+todayExpr+" AND t.deadlineSuppressionDate IS NULL", nil, filter, todayOrder)
 	if err != nil {
 		return nil, err
 	}
 	result := append(regular, unconfirmedScheduled...)
 	result = append(result, unconfirmedOverdue...)
-	maxIndex := int(^uint(0) >> 1)
 	sort.Slice(result, func(i, j int) bool {
-		left := maxIndex
-		right := maxIndex
-		if result[i].TodayIndex != nil {
-			left = *result[i].TodayIndex
-		}
-		if result[j].TodayIndex != nil {
-			right = *result[j].TodayIndex
-		}
-		if left != right {
-			return left < right
-		}
-		return result[i].StartDate < result[j].StartDate
+		return todayTaskLess(result[i], result[j])
 	})
 	return result, nil
+}
+
+func todayTaskLess(left, right Task) bool {
+	if cmp := compareNullableInt(left.StartBucket, right.StartBucket, false); cmp != 0 {
+		return cmp < 0
+	}
+	if cmp := compareNullableInt(left.TodayIndexReferenceDate, right.TodayIndexReferenceDate, true); cmp != 0 {
+		return cmp < 0
+	}
+	if cmp := compareNullableInt(left.TodayIndex, right.TodayIndex, false); cmp != 0 {
+		return cmp < 0
+	}
+	return left.UUID < right.UUID
+}
+
+// compareNullableInt matches SQLite's native null placement: NULL sorts first
+// in ascending order and last in descending order.
+func compareNullableInt(left, right *int, descending bool) int {
+	if left == nil && right == nil {
+		return 0
+	}
+	if left == nil {
+		if descending {
+			return 1
+		}
+		return -1
+	}
+	if right == nil {
+		if descending {
+			return -1
+		}
+		return 1
+	}
+	comparison := cmp.Compare(*left, *right)
+	if descending {
+		return -comparison
+	}
+	return comparison
 }
 
 // InboxTasks returns inbox tasks.
@@ -708,7 +736,7 @@ func (s *Store) queryTasks(where string, args []any, filter TaskFilter, order st
 		return nil, fmt.Errorf("database not initialized")
 	}
 	var b strings.Builder
-	b.WriteString("SELECT t.uuid, t.type, t.title, t.status, t.trashed, t.notes, t.start, t.startDate, t.startBucket, t.deadline, t.stopDate, t.creationDate, t.userModificationDate, t.\"index\", t.todayIndex, (t.rt1_recurrenceRule IS NOT NULL OR t.repeater IS NOT NULL) AS repeating, ")
+	b.WriteString("SELECT t.uuid, t.type, t.title, t.status, t.trashed, t.notes, t.start, t.startDate, t.startBucket, t.deadline, t.stopDate, t.creationDate, t.userModificationDate, t.\"index\", t.todayIndex, t.todayIndexReferenceDate, (t.rt1_recurrenceRule IS NOT NULL OR t.repeater IS NOT NULL) AS repeating, ")
 	b.WriteString("t.project, p.title, t.area, a.title, t.heading, h.title, ")
 	b.WriteString("(SELECT group_concat(title, '" + tagSeparator + "') FROM (")
 	b.WriteString("SELECT tag.title AS title FROM TMTag tag ")
@@ -863,6 +891,7 @@ func scanTaskRows(rows *sql.Rows) ([]Task, error) {
 		var modified sql.NullFloat64
 		var index sql.NullInt64
 		var todayIndex sql.NullInt64
+		var todayIndexReferenceDate sql.NullInt64
 		var repeating sql.NullInt64
 		var projectID sql.NullString
 		var projectTitle sql.NullString
@@ -871,7 +900,7 @@ func scanTaskRows(rows *sql.Rows) ([]Task, error) {
 		var headingID sql.NullString
 		var headingTitle sql.NullString
 		var tagTitles sql.NullString
-		if err := rows.Scan(&t.UUID, &taskType, &t.Title, &t.Status, &t.Trashed, &notes, &start, &startDate, &startBucket, &deadline, &stopDate, &created, &modified, &index, &todayIndex, &repeating, &projectID, &projectTitle, &areaID, &areaTitle, &headingID, &headingTitle, &tagTitles); err != nil {
+		if err := rows.Scan(&t.UUID, &taskType, &t.Title, &t.Status, &t.Trashed, &notes, &start, &startDate, &startBucket, &deadline, &stopDate, &created, &modified, &index, &todayIndex, &todayIndexReferenceDate, &repeating, &projectID, &projectTitle, &areaID, &areaTitle, &headingID, &headingTitle, &tagTitles); err != nil {
 			return nil, err
 		}
 		t.Type = taskTypeLabel(taskType)
@@ -881,6 +910,10 @@ func scanTaskRows(rows *sql.Rows) ([]Task, error) {
 		if todayIndex.Valid {
 			val := int(todayIndex.Int64)
 			t.TodayIndex = &val
+		}
+		if todayIndexReferenceDate.Valid {
+			val := int(todayIndexReferenceDate.Int64)
+			t.TodayIndexReferenceDate = &val
 		}
 		if repeating.Valid {
 			t.Repeating = repeating.Int64 != 0

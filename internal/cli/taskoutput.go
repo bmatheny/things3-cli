@@ -86,44 +86,48 @@ func normalizeTaskField(raw string) string {
 }
 
 var taskFieldAliases = map[string]string{
-	"project_title": "project",
-	"area_title":    "area",
-	"heading_title": "heading",
-	"status_label":  "status_label",
-	"startbucket":   "start_bucket",
-	"start-bucket":  "start_bucket",
-	"start_bucket":  "start_bucket",
-	"todayindex":    "today_index",
-	"today-index":   "today_index",
-	"today_index":   "today_index",
-	"repeat":        "repeating",
+	"project_title":              "project",
+	"area_title":                 "area",
+	"heading_title":              "heading",
+	"status_label":               "status_label",
+	"startbucket":                "start_bucket",
+	"start-bucket":               "start_bucket",
+	"start_bucket":               "start_bucket",
+	"todayindex":                 "today_index",
+	"today-index":                "today_index",
+	"today_index":                "today_index",
+	"todayindexreferencedate":    "today_index_reference_date",
+	"today-index-reference-date": "today_index_reference_date",
+	"today_index_reference_date": "today_index_reference_date",
+	"repeat":                     "repeating",
 }
 
 var taskFieldHeaders = map[string]string{
-	"uuid":         "UUID",
-	"title":        "TITLE",
-	"project":      "PROJECT",
-	"project_id":   "PROJECT_ID",
-	"area":         "AREA",
-	"area_id":      "AREA_ID",
-	"heading":      "HEADING",
-	"heading_id":   "HEADING_ID",
-	"status":       "STATUS",
-	"status_label": "STATUS_LABEL",
-	"trashed":      "TRASHED",
-	"notes":        "NOTES",
-	"start":        "START",
-	"start_date":   "START_DATE",
-	"start_bucket": "START_BUCKET",
-	"repeating":    "REPEATING",
-	"deadline":     "DEADLINE",
-	"stop_date":    "STOP_DATE",
-	"created":      "CREATED",
-	"modified":     "MODIFIED",
-	"index":        "INDEX",
-	"today_index":  "TODAY_INDEX",
-	"tags":         "TAGS",
-	"type":         "TYPE",
+	"uuid":                       "UUID",
+	"title":                      "TITLE",
+	"project":                    "PROJECT",
+	"project_id":                 "PROJECT_ID",
+	"area":                       "AREA",
+	"area_id":                    "AREA_ID",
+	"heading":                    "HEADING",
+	"heading_id":                 "HEADING_ID",
+	"status":                     "STATUS",
+	"status_label":               "STATUS_LABEL",
+	"trashed":                    "TRASHED",
+	"notes":                      "NOTES",
+	"start":                      "START",
+	"start_date":                 "START_DATE",
+	"start_bucket":               "START_BUCKET",
+	"repeating":                  "REPEATING",
+	"deadline":                   "DEADLINE",
+	"stop_date":                  "STOP_DATE",
+	"created":                    "CREATED",
+	"modified":                   "MODIFIED",
+	"index":                      "INDEX",
+	"today_index":                "TODAY_INDEX",
+	"today_index_reference_date": "TODAY_INDEX_REFERENCE_DATE",
+	"tags":                       "TAGS",
+	"type":                       "TYPE",
 }
 
 var defaultTaskTableFields = []string{
@@ -188,6 +192,11 @@ func taskFieldValue(task db.Task, field string) any {
 			return nil
 		}
 		return *task.TodayIndex
+	case "today_index_reference_date":
+		if task.TodayIndexReferenceDate == nil {
+			return nil
+		}
+		return *task.TodayIndexReferenceDate
 	case "tags":
 		return task.Tags
 	case "type":

@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -51,6 +52,81 @@ func TestTodayTasks(t *testing.T) {
 	}
 }
 
+func TestTodayTasksCompositeOrderingAndLimit(t *testing.T) {
+	conn, err := sql.Open("sqlite", ":memory:")
+	if err != nil {
+		t.Fatalf("open db: %v", err)
+	}
+	defer conn.Close()
+	if err := seedTodayDB(conn); err != nil {
+		t.Fatalf("seed db: %v", err)
+	}
+	if _, err := conn.Exec(`DELETE FROM TMTask`); err != nil {
+		t.Fatalf("clear tasks: %v", err)
+	}
+
+	today := thingsDate(time.Now())
+	rows := []struct {
+		uuid                     string
+		bucket, reference, index *int
+	}{
+		{"NIL_BUCKET", nil, intPtr(999), intPtr(99)},
+		{"NEW_REF", intPtr(0), intPtr(300), intPtr(50)},
+		{"NULL_INDEX", intPtr(0), intPtr(200), nil},
+		{"TIE_A", intPtr(0), intPtr(200), intPtr(1)},
+		{"TIE_B", intPtr(0), intPtr(200), intPtr(1)},
+		{"OLD_REF", intPtr(0), intPtr(100), intPtr(0)},
+		{"NULL_REF", intPtr(0), nil, intPtr(0)},
+		{"EVENING", intPtr(1), intPtr(999), intPtr(0)},
+	}
+	for _, row := range rows {
+		if _, err := conn.Exec(`INSERT INTO TMTask
+			(uuid, type, status, trashed, title, start, startDate, startBucket, todayIndexReferenceDate, todayIndex)
+			VALUES (?, ?, ?, 0, ?, 1, ?, ?, ?, ?)`, row.uuid, TaskTypeTodo, StatusIncomplete, row.uuid, today, row.bucket, row.reference, row.index); err != nil {
+			t.Fatalf("insert %s: %v", row.uuid, err)
+		}
+	}
+
+	store := &Store{conn: conn, path: ":memory:"}
+	status := StatusIncomplete
+	tasks, err := store.TodayTasks(TaskFilter{Status: &status})
+	if err != nil {
+		t.Fatalf("today tasks: %v", err)
+	}
+	got := make([]string, len(tasks))
+	for i, task := range tasks {
+		got[i] = task.UUID
+	}
+	want := []string{"NIL_BUCKET", "NEW_REF", "NULL_INDEX", "TIE_A", "TIE_B", "OLD_REF", "NULL_REF", "EVENING"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("unexpected composite order:\n got %v\nwant %v", got, want)
+	}
+
+	if _, err := conn.Exec(`INSERT INTO TMTask
+		(uuid, type, status, trashed, title, start, startDate, startBucket, todayIndexReferenceDate, todayIndex)
+		VALUES ('SCHEDULED_LIMIT', ?, ?, 0, 'SCHEDULED_LIMIT', 2, ?, 0, 500, 0)`, TaskTypeTodo, StatusIncomplete, today); err != nil {
+		t.Fatalf("insert scheduled limit candidate: %v", err)
+	}
+	if _, err := conn.Exec(`INSERT INTO TMTask
+		(uuid, type, status, trashed, title, start, deadline, startBucket, todayIndexReferenceDate, todayIndex)
+		VALUES ('OVERDUE_LIMIT', ?, ?, 0, 'OVERDUE_LIMIT', 1, ?, 0, 400, 0)`, TaskTypeTodo, StatusIncomplete, today); err != nil {
+		t.Fatalf("insert overdue limit candidate: %v", err)
+	}
+
+	limited, err := store.TodayTasks(TaskFilter{Status: &status, Limit: 1})
+	if err != nil {
+		t.Fatalf("limited today tasks: %v", err)
+	}
+	got = got[:0]
+	for _, task := range limited {
+		got = append(got, task.UUID)
+	}
+	want = []string{"NIL_BUCKET", "SCHEDULED_LIMIT", "OVERDUE_LIMIT"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("unexpected branch-limited candidates:\n got %v\nwant %v", got, want)
+	}
+}
+
 func seedTodayDB(conn *sql.DB) error {
 	statements := []string{
 		`CREATE TABLE TMTask (
@@ -66,6 +142,7 @@ func seedTodayDB(conn *sql.DB) error {
 			start INTEGER,
 			startDate INTEGER,
 			startBucket INTEGER,
+			todayIndexReferenceDate INTEGER,
 			deadline INTEGER,
 			deadlineSuppressionDate INTEGER,
 			creationDate REAL,
