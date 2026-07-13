@@ -1,6 +1,11 @@
 package integration_test
 
-import "testing"
+import (
+	"database/sql"
+	"strings"
+	"testing"
+	"time"
+)
 
 func TestInboxCommand(t *testing.T) {
 	dbPath := writeTestDB(t)
@@ -93,6 +98,53 @@ func TestAllCommand(t *testing.T) {
 	requireSuccess(t, code)
 	assertContains(t, out, "Inbox")
 	assertContains(t, out, "Inbox Task")
+}
+
+func TestTodayCompositeOrderAndExplicitSort(t *testing.T) {
+	dbPath := writeTestDB(t)
+	conn, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		t.Fatalf("open db: %v", err)
+	}
+	today := thingsDate(time.Now())
+	for _, row := range []struct {
+		uuid, title              string
+		bucket, reference, index int
+	}{
+		{"ORDER_NEW", "Zulu New Reference", 0, 300, 9},
+		{"ORDER_OLD", "Alpha Old Reference", 0, 200, 1},
+		{"ORDER_EVENING", "Beta Evening", 1, 999, 0},
+	} {
+		if _, err := conn.Exec(`INSERT INTO TMTask (uuid, type, status, trashed, title, start, startDate, startBucket, todayIndexReferenceDate, todayIndex) VALUES (?, 0, 0, 0, ?, 1, ?, ?, ?, ?)`, row.uuid, row.title, today, row.bucket, row.reference, row.index); err != nil {
+			t.Fatalf("insert %s: %v", row.uuid, err)
+		}
+	}
+	if err := conn.Close(); err != nil {
+		t.Fatalf("close db: %v", err)
+	}
+
+	out, _, code := runThings(t, "", "today", "--db", dbPath, "--format", "csv", "--select", "title", "--no-header")
+	requireSuccess(t, code)
+	assertBefore(t, out, "Zulu New Reference", "Alpha Old Reference")
+	assertBefore(t, out, "Alpha Old Reference", "Beta Evening")
+
+	out, _, code = runThings(t, "", "today", "--db", dbPath, "--format", "csv", "--select", "title", "--no-header", "--sort", "title")
+	requireSuccess(t, code)
+	assertBefore(t, out, "Alpha Old Reference", "Zulu New Reference")
+
+	out, _, code = runThings(t, "", "all", "--db", dbPath, "--json")
+	requireSuccess(t, code)
+	assertBefore(t, out, "Zulu New Reference", "Alpha Old Reference")
+	assertBefore(t, out, "Alpha Old Reference", "Beta Evening")
+}
+
+func assertBefore(t *testing.T, output, first, second string) {
+	t.Helper()
+	firstIndex := strings.Index(output, first)
+	secondIndex := strings.Index(output, second)
+	if firstIndex < 0 || secondIndex < 0 || firstIndex >= secondIndex {
+		t.Fatalf("expected %q before %q in %q", first, second, output)
+	}
 }
 
 func TestAreasRecursive(t *testing.T) {

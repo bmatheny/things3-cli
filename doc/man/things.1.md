@@ -972,6 +972,9 @@ terminal Full Disk Access to read it.
 ## things today [OPTIONS...]
 
 Lists tasks that should appear in Today using the local Things database.
+Rows follow the Things Today/This Evening order using the reference date and
+Today index. Select `today_index_reference_date` to inspect the raw packed
+date value.
 
 **OPTIONS**
 

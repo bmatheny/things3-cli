@@ -301,7 +301,9 @@ SYNOPSIS
 
 DESCRIPTION
   Lists tasks that should appear in Today using the local Things database.
-  This mirrors the Things logic for today (including predicted items).
+  This mirrors the Things logic for today (including predicted items) and
+  orders rows by Today/This Evening bucket, reference date, and Today index.
+  Select today_index_reference_date to inspect the raw packed date value.
 
 OPTIONS
   --db=PATH

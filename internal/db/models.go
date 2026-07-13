@@ -36,30 +36,31 @@ type Tag struct {
 }
 
 type Task struct {
-	Type         string          `json:"type,omitempty"`
-	UUID         string          `json:"uuid"`
-	Title        string          `json:"title"`
-	Status       int             `json:"status"`
-	Trashed      bool            `json:"trashed"`
-	Notes        string          `json:"notes,omitempty"`
-	Start        string          `json:"start,omitempty"`
-	StartDate    string          `json:"start_date,omitempty"`
-	StartBucket  *int            `json:"start_bucket,omitempty"`
-	Repeating    bool            `json:"repeating,omitempty"`
-	Deadline     string          `json:"deadline,omitempty"`
-	StopDate     string          `json:"stop_date,omitempty"`
-	Created      string          `json:"created,omitempty"`
-	Modified     string          `json:"modified,omitempty"`
-	Index        int             `json:"index,omitempty"`
-	TodayIndex   *int            `json:"today_index,omitempty"`
-	Tags         []string        `json:"tags,omitempty"`
-	Checklist    []ChecklistItem `json:"checklist,omitempty"`
-	ProjectID    string          `json:"project_id,omitempty"`
-	ProjectTitle string          `json:"project_title,omitempty"`
-	AreaID       string          `json:"area_id,omitempty"`
-	AreaTitle    string          `json:"area_title,omitempty"`
-	HeadingID    string          `json:"heading_id,omitempty"`
-	HeadingTitle string          `json:"heading_title,omitempty"`
+	Type                    string          `json:"type,omitempty"`
+	UUID                    string          `json:"uuid"`
+	Title                   string          `json:"title"`
+	Status                  int             `json:"status"`
+	Trashed                 bool            `json:"trashed"`
+	Notes                   string          `json:"notes,omitempty"`
+	Start                   string          `json:"start,omitempty"`
+	StartDate               string          `json:"start_date,omitempty"`
+	StartBucket             *int            `json:"start_bucket,omitempty"`
+	Repeating               bool            `json:"repeating,omitempty"`
+	Deadline                string          `json:"deadline,omitempty"`
+	StopDate                string          `json:"stop_date,omitempty"`
+	Created                 string          `json:"created,omitempty"`
+	Modified                string          `json:"modified,omitempty"`
+	Index                   int             `json:"index,omitempty"`
+	TodayIndex              *int            `json:"today_index,omitempty"`
+	TodayIndexReferenceDate *int            `json:"today_index_reference_date,omitempty"`
+	Tags                    []string        `json:"tags,omitempty"`
+	Checklist               []ChecklistItem `json:"checklist,omitempty"`
+	ProjectID               string          `json:"project_id,omitempty"`
+	ProjectTitle            string          `json:"project_title,omitempty"`
+	AreaID                  string          `json:"area_id,omitempty"`
+	AreaTitle               string          `json:"area_title,omitempty"`
+	HeadingID               string          `json:"heading_id,omitempty"`
+	HeadingTitle            string          `json:"heading_title,omitempty"`
 }
 
 type ChecklistItem struct {

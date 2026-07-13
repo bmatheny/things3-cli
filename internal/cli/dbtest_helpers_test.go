@@ -40,7 +40,8 @@ func writeTestDB(t *testing.T) string {
 			rt1_repeatingTemplate TEXT,
 			rt1_recurrenceRule BLOB,
 			repeater BLOB,
-			todayIndex INTEGER
+			todayIndex INTEGER,
+			todayIndexReferenceDate INTEGER
 		);`,
 		`CREATE TABLE TMTag (uuid TEXT PRIMARY KEY, title TEXT, shortcut TEXT, parent TEXT);`,
 		`CREATE TABLE TMTaskTag (tasks TEXT NOT NULL, tags TEXT NOT NULL);`,

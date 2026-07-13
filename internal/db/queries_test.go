@@ -51,6 +51,16 @@ func TestProjectsAndTasksQueries(t *testing.T) {
 	if len(tasks) != 1 || tasks[0].Title != "Task One" {
 		t.Fatalf("unexpected tasks: %#v", tasks)
 	}
+	if tasks[0].TodayIndexReferenceDate == nil || *tasks[0].TodayIndexReferenceDate != 135004288 {
+		t.Fatalf("unexpected today index reference date: %#v", tasks[0].TodayIndexReferenceDate)
+	}
+	projectTask, err := store.TaskByID("P1")
+	if err != nil {
+		t.Fatalf("project task by ID: %v", err)
+	}
+	if projectTask.TodayIndexReferenceDate != nil {
+		t.Fatalf("expected NULL reference date to remain nil, got %#v", projectTask.TodayIndexReferenceDate)
+	}
 	if tasks[0].Notes != "Some notes" {
 		t.Fatalf("unexpected notes: %q", tasks[0].Notes)
 	}
@@ -144,7 +154,8 @@ func seedTestDB(conn *sql.DB) error {
 			rt1_repeatingTemplate TEXT,
 			rt1_recurrenceRule BLOB,
 			repeater BLOB,
-			todayIndex INTEGER
+			todayIndex INTEGER,
+			todayIndexReferenceDate INTEGER
 		);`,
 		`CREATE TABLE TMTag (uuid TEXT PRIMARY KEY, title TEXT, shortcut TEXT, parent TEXT);`,
 		`CREATE TABLE TMTaskTag (tasks TEXT NOT NULL, tags TEXT NOT NULL);`,
@@ -177,7 +188,7 @@ func seedTestDB(conn *sql.DB) error {
 	if _, err := conn.Exec(`INSERT INTO TMTask (uuid, type, status, trashed, title, project, area, heading, notes) VALUES ('H1', ?, ?, 0, 'Heading', 'P1', 'A1', '', '');`, TaskTypeHeading, StatusIncomplete); err != nil {
 		return err
 	}
-	if _, err := conn.Exec(`INSERT INTO TMTask (uuid, type, status, trashed, title, project, area, heading, notes, start, startDate, deadline, creationDate, userModificationDate) VALUES ('T1', ?, ?, 0, 'Task One', 'P1', 'A1', 'H1', 'Some notes', 1, ?, ?, ?, ?);`, TaskTypeTodo, StatusIncomplete, startDate, deadline, nowUnix, nowUnix); err != nil {
+	if _, err := conn.Exec(`INSERT INTO TMTask (uuid, type, status, trashed, title, project, area, heading, notes, start, startDate, deadline, creationDate, userModificationDate, todayIndexReferenceDate) VALUES ('T1', ?, ?, 0, 'Task One', 'P1', 'A1', 'H1', 'Some notes', 1, ?, ?, ?, ?, 135004288);`, TaskTypeTodo, StatusIncomplete, startDate, deadline, nowUnix, nowUnix); err != nil {
 		return err
 	}
 	if _, err := conn.Exec(`INSERT INTO TMTask (uuid, type, status, trashed, title, project, area, heading, start, startDate, deadline, creationDate, userModificationDate, rt1_recurrenceRule) VALUES ('T2', ?, ?, 0, 'Repeat Task', 'P1', 'A1', 'H1', 1, ?, ?, ?, ?, X'01');`, TaskTypeTodo, StatusIncomplete, startDate, deadline, nowUnix, nowUnix); err != nil {

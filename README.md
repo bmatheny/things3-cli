@@ -85,6 +85,10 @@ Things database to list content:
 - `things templates` List repeating template tasks
 - `things list-project-tasks --id <UUID>` List todos for a project
 
+`things today` follows Things' Today/This Evening ordering using the raw
+`today_index_reference_date` and `today_index` database fields. Select the
+ordering metadata with `--select start_bucket,today_index_reference_date,today_index`.
+
 By default it looks for the Things database in your user Library under the
 Things app group container (the `ThingsData-*` folder). You can override the
 path with `THINGSDB` or `--db`.
