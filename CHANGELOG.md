@@ -7,6 +7,10 @@ Semantic Versioning.
 
 ## [Unreleased]
 
+## [0.4.2-beta] - 2026-07-15
+
+- Allow clearing tags and such
+
 ## [0.3.0] - 2026-05-26
 - Added `templates` command to list repeating template tasks from the Things database.
 - Added `update --complete-checklist-item` and `--incomplete-checklist-item`
